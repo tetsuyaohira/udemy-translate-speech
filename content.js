@@ -237,7 +237,11 @@ function observeCaption(targetNode, voices, videoId) {
       }
 
       // 抽出した字幕がまだ読み上げていないものだった場合
-      if (caption !== '' && caption !== '&amp;nbsp;') {
+      if (
+        caption !== '' &&
+        caption !== '&amp;nbsp;' &&
+        oldCaption !== caption
+      ) {
         if (result.isEnabledTranslation) {
           const sourceLanguage = 'en' // todo: 字幕の言語を設定値から取得する
           const targetLanguage = 'ja' // todo: 字幕の言語を設定値から取得する
@@ -246,15 +250,12 @@ function observeCaption(targetNode, voices, videoId) {
           )}`
           const translated = await translateText(apiUrl)
           if (translated !== undefined && oldCaption !== translated) {
-            oldCaption = caption
             captions.push(translated)
           }
         } else {
-          if (oldCaption !== caption) {
-            oldCaption = caption
-            captions.push(caption)
-          }
+          captions.push(caption)
         }
+        oldCaption = caption
       }
 
       // 読上リストが溜まっている場合
