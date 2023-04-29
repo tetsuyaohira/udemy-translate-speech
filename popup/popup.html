@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <link href="popup.css" rel="stylesheet">
+    <script src="popup.js"></script>
+</head>
+
+<body>
+<div class="widget" id="widget">
+    <div id="widget-title" class="widget-title">
+        <h3>Udemy translate & speaker</h3>
+    </div>
+    <div class="container-power">
+        <div class="container-power-option">
+            <div class="item1">
+                <p>Translation</p>
+            </div>
+            <div class="item2"></div>
+            <div class="item3">
+                <div class="power-button">
+                    <input id="power-button-switch-translation" class="power-button-switch" type="checkbox">
+                    <label for="power-button-switch-translation"></label>
+                    <div class="power-button-switch-img"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-power">
+        <div class="container-power-option">
+            <div class="item1">
+                <p>Speak</p>
+            </div>
+            <div class="item2"></div>
+            <div class="item3">
+                <div class="power-button">
+                    <input id="power-button-switch-speak" class="power-button-switch" type="checkbox">
+                    <label for="power-button-switch-speak"></label>
+                    <div class="power-button-switch-img"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="power-on" id="power-on">
+        <div class="container-volume">
+            <p class="container-volume-title">Volume</p>
+            <div class="container-volume-option">
+                <div class="item1">1</div>
+                <div class="item2">
+                    <input type="range" min="0.1" max="1" step="0.1" id="volume-slider">
+                </div>
+                <div class="item3">10</div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
