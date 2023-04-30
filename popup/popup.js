@@ -7,6 +7,7 @@ function constructor() {
     [
       'isEnabledSpeak',
       'isEnabledTranslation',
+      'translateTo',
       'utteranceVolume',
       'utteranceRate',
       'utteranceVoiceList',
@@ -24,6 +25,12 @@ function constructor() {
         'change',
         handleCheckboxChangeTranslation
       )
+
+      // translation language
+      const languageSelect = document.getElementById('translate-to')
+      languageSelect.value = data.translateTo
+      languageSelect.disabled = !isEnabledTranslation
+      languageSelect.addEventListener('change', handleLanguageChange)
 
       // speak ON/OFF
       const isEnabledSpeak = data.isEnabledSpeak
@@ -93,7 +100,7 @@ function createVoiceTypeElement(data) {
 }
 
 function createRateElement(data) {
-  document.getElementById('widget').style.height = 370 + 'px'
+  document.getElementById('widget').style.height = 495 + 'px'
 
   let rateValue = data.utteranceRate
   let rateValueMin = 2
@@ -140,11 +147,6 @@ function createRateElement(data) {
   rateOption.className = 'container-rate-option'
   containerRate.appendChild(rateOption)
 
-  const item1 = document.createElement('div')
-  item1.className = 'item1'
-  item1.innerHTML = rateValueMin
-  rateOption.appendChild(item1)
-
   const rateSlider = document.createElement('input')
   rateSlider.id = 'rate-slider'
   rateSlider.type = 'range'
@@ -159,11 +161,6 @@ function createRateElement(data) {
   item2.appendChild(rateSlider)
   rateOption.appendChild(item2)
 
-  const item3 = document.createElement('div')
-  item3.className = 'item3'
-  item3.innerHTML = rateValueMax
-  rateOption.appendChild(item3)
-
   document
     .getElementById('power-on')
     .insertAdjacentElement('beforeend', containerRate)
@@ -174,7 +171,15 @@ function createRateElement(data) {
 function handleCheckboxChangeTranslation(event) {
   const isEnabledTranslation = event.target.checked
   chrome.storage.local.set({ isEnabledTranslation: isEnabledTranslation })
+
+  const languageSelect = document.getElementById('translate-to')
+  if (languageSelect !== null) languageSelect.disabled = !isEnabledTranslation
 }
+function handleLanguageChange(event) {
+  const language = event.target.value
+  chrome.storage.local.set({ translateTo: language })
+}
+
 function handleCheckboxChangeSpeak(event) {
   const isEnabledSpeak = event.target.checked
   chrome.storage.local.set({ isEnabledSpeak: isEnabledSpeak })
@@ -231,10 +236,6 @@ async function handleVoiceTypeChange(event) {
       }
     }
   }
-
-  const containerRate = document.getElementById('container-rate')
-  containerRate.getElementsByClassName('item1')[0].innerHTML = rateSlider.min
-  containerRate.getElementsByClassName('item3')[0].innerHTML = rateSlider.max
 }
 
 function getUserAgent() {

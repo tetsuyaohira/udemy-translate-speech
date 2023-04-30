@@ -22,6 +22,33 @@ const TARGET_VIDEO_NODE = 'vjs-tech' // <video class="vjs-tech">
 const TARGET_CAPTION_NODE1 = 'well--text--2H_p0' // <span class="well--text--2H_p0">
 const TARGET_CAPTION_NODE2 = 'captions-display--captions-cue-text--ECkJu' // <div class="captions-display--captions-cue-text--ECkJu">
 
+const LANGUAGES = [
+  {
+    translate: 'de',
+    speak: 'de-DE',
+  },
+  {
+    translate: 'fr',
+    speak: 'fr-FR',
+  },
+  {
+    translate: 'it',
+    speak: 'it-IT',
+  },
+  {
+    translate: 'ja',
+    speak: 'ja-JP',
+  },
+  {
+    translate: 'ko',
+    speak: 'ko-KR',
+  },
+  {
+    translate: 'ru',
+    speak: 'ru-RU',
+  },
+]
+
 window.onload = async function start() {
   synth.cancel() // バグ対策
 
@@ -46,6 +73,7 @@ window.onload = async function start() {
   // 読み上げ機能オンオフを監視
   await checkStatus()
   captions = []
+
   await start()
 }
 
@@ -56,7 +84,11 @@ window.onload = async function start() {
 async function getVoices() {
   const voices = synth.getVoices()
   if (voices.length === 0) throw Error(UNAVAILABLE_MESSAGE)
-  return voices.filter((voice) => voice.lang === 'ja-JP') // todo: 他の言語も対応
+  const result = await getStorage()
+  const targetLang = LANGUAGES.find(
+    (language) => language.translate === result.translateTo
+  )
+  return voices.filter((voice) => voice.lang === targetLang.speak)
 }
 
 /**
@@ -140,7 +172,6 @@ function observeVideo(videoId) {
  */
 function observeCaption(targetNode, voices, videoId) {
   return new Promise(async (resolve, reject) => {
-    let isReturn = false
     let oldCaption = ''
 
     const intervalId = setInterval(async () => {
@@ -149,21 +180,19 @@ function observeCaption(targetNode, voices, videoId) {
       const currentVideo = document.querySelector("[id^='playerId__'] video")
 
       // 読み込み時とビデオIDが変わった場合
-      if (currentVideo !== null && currentVideo.id !== videoId) {
+      if (currentVideo?.id !== videoId) {
         clearInterval(intervalId)
         resolve(CHANGE_VIDEO_ID_MESSAGE)
-        isReturn = true
+        return
       }
-      if (isReturn) return
 
       // 読み上げ機能をオフに設定している場合、監視を終了する
       const result = await getStorage()
       if (!result.isEnabledSpeak) {
         clearInterval(intervalId)
         resolve(DISABLE_MESSAGE)
-        isReturn = true
+        return
       }
-      if (isReturn) return
 
       // 監視対象の字幕を含むエレメントを取得する
       const TARGET_NODE1 =
@@ -186,8 +215,9 @@ function observeCaption(targetNode, voices, videoId) {
         oldCaption !== caption
       ) {
         if (result.isEnabledTranslation) {
-          const sourceLanguage = 'en' // todo: 字幕の言語を設定値から取得する
-          const targetLanguage = 'ja' // todo: 字幕の言語を設定値から取得する
+          const sourceLanguage = 'en' // todo: 字幕の言語をUdemyから取得する
+          const result = await getStorage()
+          const targetLanguage = result.translateTo
           const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(
             caption
           )}`
@@ -216,7 +246,10 @@ function observeCaption(targetNode, voices, videoId) {
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
-        speech.lang = 'ja-JP' // todo: 設定値から取得する
+        const targetLang = LANGUAGES.find(
+          (language) => language.translate === result.translateTo
+        )
+        speech.lang = targetLang.speak
         speech.volume = result.utteranceVolume
         speech.rate = result.utteranceRate
         speech.voice = voices[result.utteranceVoiceType]
