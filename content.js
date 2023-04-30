@@ -58,11 +58,10 @@ window.onload = async function start() {
   let utteranceVoiceList = voices.map((voice) => voice.name)
   chrome.storage.local.set({ utteranceVoiceList })
 
-  const video = await getElement(TARGET_VIDEO_NODE)
-  video.onpause = () => synth.pause() // ビデオが一時停止の場合は発話も一時停止する
-  video.onplay = () => synth.resume() // ビデオが再生中の場合は発話も再開する
-
   // ビデオを監視
+  const video = await getElement(TARGET_VIDEO_NODE)
+  // video.onpause = () => synth.pause() // ビデオが一時停止の場合は発話も一時停止する
+  // video.onplay = () => synth.resume() // ビデオが再生中の場合は発話も再開する
   const videoId = video.id
   await observeVideo(videoId)
 
@@ -73,7 +72,6 @@ window.onload = async function start() {
   // 読み上げ機能オンオフを監視
   await checkStatus()
   captions = []
-
   await start()
 }
 
@@ -214,12 +212,14 @@ function observeCaption(targetNode, voices, videoId) {
         caption !== '&amp;nbsp;' &&
         oldCaption !== caption
       ) {
+        oldCaption = caption
         if (result.isEnabledTranslation) {
-          const sourceLanguage = 'en' // todo: 字幕の言語をUdemyから取得する
+          const sourceLanguage = 'en'
           const result = await getStorage()
           const targetLanguage = result.translateTo
+          const editedCaption = caption.replace(/\. /g, '.') // 文が複数あると後続の文が翻訳されないため、`. `を`.`に置き換えて全文が翻訳されるようにしている
           const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(
-            caption
+            editedCaption
           )}`
           const translated = await translateText(apiUrl)
           if (translated !== undefined && oldCaption !== translated) {
@@ -228,7 +228,6 @@ function observeCaption(targetNode, voices, videoId) {
         } else {
           captions.push(caption)
         }
-        oldCaption = caption
       }
 
       // 読上リストが溜まっている場合
@@ -236,9 +235,6 @@ function observeCaption(targetNode, voices, videoId) {
       if (5 < captions.length) {
         currentVideo.pause() // 再生中のビデオを停止する
         alert(SKIP_MESSAGE)
-        clearInterval(intervalId)
-        resolve(DISABLE_MESSAGE)
-        return
       }
 
       // 発話しておらず字幕リストが空でもない場合
@@ -260,7 +256,7 @@ function observeCaption(targetNode, voices, videoId) {
         }
         synth.speak(speech)
       }
-    }, 500)
+    }, 100)
   })
 }
 
