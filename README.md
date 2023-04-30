@@ -6,8 +6,7 @@ The Udemy Translate Speech Chrome Extension is a tool that automatically transla
 
 ## Features
 
-- Automatic translation of Udemy video subtitles to the user's preferred language (coming soon)
-  - Currently only English to Japanese translation.
+- Automatic translation of Udemy video subtitles to the user's preferred language
 - Playback of the translated subtitles using synthesized speech
 - Customizable settings for language preferences and voice options
 

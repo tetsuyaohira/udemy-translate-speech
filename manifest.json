@@ -3,7 +3,7 @@
 
     "name": "Udemy translate & speech",
     "description": "A Chrome extension that translates subtitles of Udemy content and reads them out with a synthetic voice.",
-    "version": "0.1",
+    "version": "0.2",
     "manifest_version": 3,
     "background": {
         "service_worker": "background.js"
