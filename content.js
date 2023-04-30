@@ -49,9 +49,15 @@ const LANGUAGES = [
   },
 ]
 
-window.onload = async function start() {
+const start = async () => {
   synth.cancel() // バグ対策
+  synth.pause() // 初期表示時は喋らない
 
+  await reStart()
+}
+window.onload = start
+
+const reStart = async () => {
   const voices = await getVoices()
 
   // 合成音声をストレージに保存
@@ -59,20 +65,19 @@ window.onload = async function start() {
   chrome.storage.local.set({ utteranceVoiceList })
 
   // ビデオを監視
-  const video = await getElement(TARGET_VIDEO_NODE)
-  // video.onpause = () => synth.pause() // ビデオが一時停止の場合は発話も一時停止する
-  // video.onplay = () => synth.resume() // ビデオが再生中の場合は発話も再開する
+  const video = await getElementByClassName(TARGET_VIDEO_NODE)
+  video.onplay = () => synth.resume()
   const videoId = video.id
   await observeVideo(videoId)
 
   // 字幕を監視
-  const videoPlayer = await getElement(TARGET_CONTAINER_NODE)
+  const videoPlayer = await getElementByClassName(TARGET_CONTAINER_NODE)
   await observeCaption(videoPlayer, voices, videoId)
 
   // 読み上げ機能オンオフを監視
   await checkStatus()
   captions = []
-  await start()
+  await reStart()
 }
 
 /**
@@ -107,18 +112,17 @@ async function checkStatus() {
 
 /**
  * クラス属性名をもとにエレメントを取得する
- * @param {string} attributeName
+ * @param {string} className
  * @returns {Promise<HTMLVideoElement>} elements
  */
-async function getElement(attributeName) {
+async function getElementByClassName(className) {
   return new Promise((resolve) => {
     const intervalId = setInterval(() => {
-      const TARGET = document.getElementsByClassName(attributeName)[0]
+      const element = document.getElementsByClassName(className)[0]
 
-      if (TARGET !== undefined) {
+      if (element !== undefined) {
         clearInterval(intervalId)
-
-        resolve(TARGET)
+        resolve(element)
       }
     }, 500)
   })
