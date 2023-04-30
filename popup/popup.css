@@ -6,7 +6,7 @@ body {
 
 .widget {
     width: 300px;
-    height: 220px;
+    height: 365px;
 }
 
 .widget-title h3 {
@@ -116,13 +116,6 @@ body {
     user-select: none;
 }
 
-.container-volume-option {
-    margin: 0;
-    display: grid;
-    grid-template-rows: 30px;
-    grid-template-columns: 30px 1fr 30px;
-}
-
 .container-volume-option .item1 {
     background-color: #fff;
     width: 100%;
@@ -168,13 +161,6 @@ body {
 
     font-size: 16px;
     user-select: none;
-}
-
-.container-rate-option {
-    margin: 0;
-    display: grid;
-    grid-template-rows: 30px;
-    grid-template-columns: 30px 1fr 30px;
 }
 
 .container-rate-option .item1 {

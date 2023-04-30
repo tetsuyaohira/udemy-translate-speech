@@ -2,6 +2,7 @@
 
 const isEnabledSpeak = true
 const isEnabledTranslation = true
+const translateTo = 'ja'
 const utteranceVolume = 0.5
 const utteranceRate = 3.5
 const utteranceVoiceList = []
@@ -11,6 +12,7 @@ const userAgent = ''
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({ isEnabledSpeak })
   chrome.storage.local.set({ isEnabledTranslation })
+  chrome.storage.local.set({ translateTo })
   chrome.storage.local.set({ utteranceVolume })
   chrome.storage.local.set({ utteranceRate })
   chrome.storage.local.set({ utteranceVoiceList })
