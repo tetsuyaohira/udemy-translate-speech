@@ -23,102 +23,55 @@ const TARGET_CAPTION_NODE1 = 'well--text--2H_p0' // <span class="well--text--2H_
 const TARGET_CAPTION_NODE2 = 'captions-display--captions-cue-text--ECkJu' // <div class="captions-display--captions-cue-text--ECkJu">
 
 window.onload = async function start() {
-  /* 合成音声インスタンスを抹消する（バグ対策） */
-  synth.cancel()
+  synth.cancel() // バグ対策
 
-  let isError = false
-  const voicesList = await getVoiceList().then(
-    (result) => result,
-    (error) => {
-      alert(error)
-      isError = true
-    }
-  )
-  if (isError) return
+  const voices = await getVoices()
 
-  // 合成音声（名前だけ）リストをストレージに保存
-  let utteranceVoiceList = []
-  voicesList.forEach((child) => utteranceVoiceList.push(child.name))
+  // 合成音声をストレージに保存
+  let utteranceVoiceList = voices.map((voice) => voice.name)
   chrome.storage.local.set({ utteranceVoiceList })
 
   const video = await getElement(TARGET_VIDEO_NODE)
-  const videoId = video.id
-  await observeVideo(videoId).then(
-    (result) => console.log(result),
-    (error) => {
-      alert(error)
-      isError = true
-    }
-  )
-  if (isError) return
-
   video.onpause = () => synth.pause() // ビデオが一時停止の場合は発話も一時停止する
-
   video.onplay = () => synth.resume() // ビデオが再生中の場合は発話も再開する
 
-  // ビデオエレメントを子に持つコンテナー
+  // ビデオを監視
+  const videoId = video.id
+  await observeVideo(videoId)
+
+  // 字幕を監視
   const videoPlayer = await getElement(TARGET_CONTAINER_NODE)
-  await observeCaption(videoPlayer, voicesList, videoId).then(
-    (result) => console.log(result),
-    (error) => {
-      alert(error)
-      isError = true
-    }
-  )
-  if (isError) return
+  await observeCaption(videoPlayer, voices, videoId)
 
+  // 読み上げ機能オンオフを監視
+  await checkStatus()
   captions = []
-
-  await checkStatus().then(
-    () => start(),
-    (error) => alert(error)
-  )
+  await start()
 }
 
 /**
- * Web Speech API の使用可能な合成音声（日本語）を取得する
- * @returns {Promise<Array>}
+ * Web Speech API の使用可能な合成音声を取得
+ * @returns {Promise<SpeechSynthesisVoice[]>}
  */
-async function getVoiceList() {
-  return new Promise((resolve, reject) => {
-    let count = 0
-    const intervalId = setInterval(() => {
-      const voices = synth.getVoices()
-
-      if (voices.length !== 0) {
-        clearInterval(intervalId)
-        resolve(voices.filter((child) => child.lang === 'ja-JP'))
-      }
-
-      if (4 < ++count) {
-        clearInterval(intervalId)
-        reject('getVoiceList:\n' + UNAVAILABLE_MESSAGE)
-      }
-    }, 250)
-  })
+async function getVoices() {
+  const voices = synth.getVoices()
+  if (voices.length === 0) throw Error(UNAVAILABLE_MESSAGE)
+  return voices.filter((voice) => voice.lang === 'ja-JP') // todo: 他の言語も対応
 }
 
 /**
  * 読み上げ機能オンオフを確認する
  * @returns {string}
  */
-function checkStatus() {
+async function checkStatus() {
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(async () => {
-      // 字幕読み上げの設定値
-      const result = await getStorage().then(
-        (result) => result,
-        (error) => {
-          clearInterval(intervalId)
-          reject(error)
-        }
-      )
-
+      const result = await getStorage()
       if (result !== undefined && result.isEnabledSpeak === true) {
         clearInterval(intervalId)
         resolve(ENABLE_MESSAGE)
       }
-    }, 2000)
+    }, 500)
   })
 }
 
@@ -127,7 +80,7 @@ function checkStatus() {
  * @param {string} attributeName
  * @returns {Promise<HTMLVideoElement>} elements
  */
-function getElement(attributeName) {
+async function getElement(attributeName) {
   return new Promise((resolve) => {
     const intervalId = setInterval(() => {
       const TARGET = document.getElementsByClassName(attributeName)[0]
@@ -203,18 +156,8 @@ function observeCaption(targetNode, voices, videoId) {
       }
       if (isReturn) return
 
-      // 字幕読み上げの設定値
-      const result = await getStorage().then(
-        (result) => result,
-        (error) => {
-          clearInterval(intervalId)
-          reject(error)
-          isReturn = true
-        }
-      )
-      if (isReturn) return
-
-      // 読み上げ機能をオフに設定している場合
+      // 読み上げ機能をオフに設定している場合、監視を終了する
+      const result = await getStorage()
       if (!result.isEnabledSpeak) {
         clearInterval(intervalId)
         resolve(DISABLE_MESSAGE)
@@ -259,6 +202,7 @@ function observeCaption(targetNode, voices, videoId) {
       }
 
       // 読上リストが溜まっている場合
+      console.log('captions.length=' + captions.length)
       if (5 < captions.length) {
         currentVideo.pause() // 再生中のビデオを停止する
         alert(SKIP_MESSAGE)
@@ -276,16 +220,12 @@ function observeCaption(targetNode, voices, videoId) {
         speech.volume = result.utteranceVolume
         speech.rate = result.utteranceRate
         speech.voice = voices[result.utteranceVoiceType]
-        synth.speak(speech)
-
-        speech.onend = () => {
-          captions.shift()
-        }
-
+        speech.onend = () => captions.shift()
         speech.onerror = () => {
           clearInterval(intervalId)
           reject('speechClosedCaption:\n' + ERROR_MESSAGE)
         }
+        synth.speak(speech)
       }
     }, 500)
   })
