@@ -53,6 +53,14 @@ const start = async () => {
   synth.cancel() // バグ対策
   synth.pause() // 初期表示時は喋らない
 
+  const currentVideo = await getElement("[id^='playerId__'] video")
+  if (currentVideo) {
+    currentVideo.addEventListener('seeked', () => {
+      console.log('seeked')
+      captions = []
+    })
+  }
+
   await reStart()
 }
 window.onload = start
@@ -120,7 +128,20 @@ async function getElementByClassName(className) {
     const intervalId = setInterval(() => {
       const element = document.getElementsByClassName(className)[0]
 
-      if (element !== undefined) {
+      if (element !== null && element !== undefined) {
+        clearInterval(intervalId)
+        resolve(element)
+      }
+    }, 500)
+  })
+}
+
+async function getElement(selectors) {
+  return new Promise((resolve) => {
+    const intervalId = setInterval(() => {
+      const element = document.querySelector(selectors)
+
+      if (element !== null && element !== undefined) {
         clearInterval(intervalId)
         resolve(element)
       }
