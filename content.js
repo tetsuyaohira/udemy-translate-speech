@@ -221,7 +221,10 @@ function observeCaption(targetNode, voices, videoId) {
           const sourceLanguage = 'en'
           const result = await getStorage()
           const targetLanguage = result.translateTo
-          const editedCaption = caption.replace(/\. /g, '.') // 文が複数あると後続の文が翻訳されないため、`. `を`.`に置き換えて全文が翻訳されるようにしている
+          const editedCaption = caption
+            .replace(/\. /g, '.')
+            .replace(/\? /g, '?') // 文が複数あると後続の文が翻訳されないため、`. `を`.`に置き換えて全文が翻訳されるようにしている
+          console.log(editedCaption)
           const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(
             editedCaption
           )}`
@@ -235,9 +238,11 @@ function observeCaption(targetNode, voices, videoId) {
       }
 
       // 読上リストが溜まっている場合
-      console.log('captions.length=' + captions.length)
+      // console.log('captions.length=' + captions.length)
       if (5 < captions.length) {
         currentVideo.pause() // 再生中のビデオを停止する
+        // synth.pause()
+        synth.resume()
         alert(SKIP_MESSAGE)
       }
 
