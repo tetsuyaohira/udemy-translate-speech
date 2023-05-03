@@ -175,6 +175,7 @@ function observeVideo(videoId) {
 function observeCaption(targetNode, voices, videoId) {
   return new Promise(async (resolve, reject) => {
     let oldCaption = ''
+    let isAutoPause = false
 
     const intervalId = setInterval(async () => {
       let caption = ''
@@ -238,16 +239,16 @@ function observeCaption(targetNode, voices, videoId) {
       }
 
       // 読上リストが溜まっている場合
-      // console.log('captions.length=' + captions.length)
       if (5 < captions.length) {
-        currentVideo.pause() // 再生中のビデオを停止する
-        // synth.pause()
-        synth.resume()
+        currentVideo.pause()
+        synth.resume() // なぜか喋らなくなるバグ対応
         alert(SKIP_MESSAGE)
       }
 
       // 発話しておらず字幕リストが空でもない場合
       if (synth.speaking === false && captions.length !== 0) {
+        // console.log('captions.length=' + captions.length)
+        // console.log('isAutoPause=' + isAutoPause)
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
@@ -258,10 +259,23 @@ function observeCaption(targetNode, voices, videoId) {
         speech.volume = result.utteranceVolume
         speech.rate = result.utteranceRate
         speech.voice = voices[result.utteranceVoiceType]
-        speech.onend = () => captions.shift()
+        speech.onend = () => {
+          captions.shift()
+          if (captions.length >= 2) {
+            // 読上リストが溜まっている場合
+            currentVideo.pause()
+            isAutoPause = true
+          } else {
+            if (isAutoPause) {
+              // Scriptが読み上げを一時停止させた場合、再生を再開する
+              currentVideo.play()
+              isAutoPause = false
+            }
+          }
+        }
         speech.onerror = () => {
           clearInterval(intervalId)
-          reject('speechClosedCaption:\n' + ERROR_MESSAGE)
+          reject('Speech Caption:\n' + ERROR_MESSAGE)
         }
         synth.speak(speech)
       }
