@@ -246,12 +246,12 @@ function observeCaption(targetNode, voices, videoId) {
           const editedCaption = caption
             .replace(/\. /g, '.')
             .replace(/\? /g, '?') // 文が複数あると後続の文が翻訳されないため、`. `を`.`に置き換えて全文が翻訳されるようにしている
-          console.log(editedCaption)
           const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(
             editedCaption
           )}`
           const translated = await translateText(apiUrl)
-          if (translated !== undefined && oldCaption !== translated) {
+          if (translated !== undefined) {
+            console.log('translated:' + translated) // todo: 画面に表示するようにする
             captions.push(translated)
           }
         } else {
@@ -280,25 +280,28 @@ function observeCaption(targetNode, voices, videoId) {
         speech.volume = result.utteranceVolume
         speech.rate = result.utteranceRate
         speech.voice = voices[result.utteranceVoiceType]
-        speech.onend = () => {
-          captions.shift()
-          if (captions.length >= 2) {
-            // 読上リストが溜まっている場合
-            currentVideo.pause()
-            isAutoPause = true
-          } else {
+        speech.onstart = () => {
+          console.log('speech:' + speech.text)
+          if (captions.length <= 1) {
             if (isAutoPause) {
-              // Scriptが読み上げを一時停止させた場合、再生を再開する
+              // 動画再生を再開
               currentVideo.play()
               isAutoPause = false
             }
           }
         }
+        speech.onend = () => captions.shift()
         speech.onerror = () => {
           clearInterval(intervalId)
           reject('Speech Caption:\n' + ERROR_MESSAGE)
         }
         synth.speak(speech)
+      }
+
+      if (captions.length >= 2) {
+        // 読上リストが溜まっている場合、動画再生をStop
+        currentVideo.pause()
+        isAutoPause = true
       }
     }, 100)
   })
@@ -312,6 +315,5 @@ async function sendHttpRequest(url) {
 async function translateText(apiUrl) {
   const response = await sendHttpRequest(apiUrl)
   const translatedText = response[0][0][0]
-  console.log(translatedText) // todo: 画面に表示するようにする
   return translatedText
 }
