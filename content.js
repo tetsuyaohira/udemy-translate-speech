@@ -53,38 +53,60 @@ const start = async () => {
   synth.cancel() // バグ対策
   synth.pause() // 初期表示時は喋らない
 
-  const currentVideo = await getElement("[id^='playerId__'] video")
-  if (currentVideo) {
-    currentVideo.addEventListener('seeked', () => {
-      console.log('seeked')
-      captions = []
-    })
-  }
-
   await reStart()
 }
 window.onload = start
 
 const reStart = async () => {
+  const video = await getElementByClassName(TARGET_VIDEO_NODE)
+  video.addEventListener('seeked', () => {
+    // console.log('seeked')
+    captions = []
+  })
+
+  // 字幕用のDiv要素を追加
+  const captionDiv = document.createElement('div')
+  captionDiv.id = 'captionDiv'
+  captionDiv.className = 'captionDiv'
+  video.parentNode.appendChild(captionDiv)
+
+  // 字幕用のDiv要素をドラッグで移動できるようにする
+  captionDiv.addEventListener('mousedown', (e) => {
+    const x = e.pageX - captionDiv.offsetLeft
+    const y = e.pageY - captionDiv.offsetTop
+    const moveHandler = (e) => {
+      // 要素をマウス座標に合わせて移動する
+      captionDiv.style.left = e.pageX - x + 'px'
+      captionDiv.style.top = e.pageY - y + 'px'
+    }
+
+    const upHandler = () => {
+      document.removeEventListener('mousemove', moveHandler)
+      document.removeEventListener('mouseup', upHandler)
+    }
+
+    document.addEventListener('mousemove', moveHandler)
+    document.addEventListener('mouseup', upHandler)
+  })
+
   const voices = await getVoices()
 
   // 合成音声をストレージに保存
   let utteranceVoiceList = voices.map((voice) => voice.name)
   chrome.storage.local.set({ utteranceVoiceList })
 
-  // ビデオを監視
-  const video = await getElementByClassName(TARGET_VIDEO_NODE)
   video.onplay = () => synth.resume()
   const videoId = video.id
-  await observeVideo(videoId)
 
-  // 字幕を監視
+  // await observeVideo(videoId) // ビデオが再生されるまで待機
+
+  // 字幕を監視して、翻訳と読み上げを行う
   const videoPlayer = await getElementByClassName(TARGET_CONTAINER_NODE)
+  captions = []
   await observeCaption(videoPlayer, voices, videoId)
 
-  // 読み上げ機能オンオフを監視
-  await checkStatus()
-  captions = []
+  await checkStatus() // 読み上げ機能オンオフを監視
+
   await reStart()
 }
 
@@ -127,19 +149,6 @@ async function getElementByClassName(className) {
   return new Promise((resolve) => {
     const intervalId = setInterval(() => {
       const element = document.getElementsByClassName(className)[0]
-
-      if (element !== null && element !== undefined) {
-        clearInterval(intervalId)
-        resolve(element)
-      }
-    }, 500)
-  })
-}
-
-async function getElement(selectors) {
-  return new Promise((resolve) => {
-    const intervalId = setInterval(() => {
-      const element = document.querySelector(selectors)
 
       if (element !== null && element !== undefined) {
         clearInterval(intervalId)
@@ -269,7 +278,7 @@ function observeCaption(targetNode, voices, videoId) {
       // 発話しておらず字幕リストが空でもない場合
       if (synth.speaking === false && captions.length !== 0) {
         // console.log('captions.length=' + captions.length)
-        // console.log('isAutoPause=' + isAutoPause)
+        console.log('isAutoPause=' + isAutoPause)
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
@@ -284,11 +293,14 @@ function observeCaption(targetNode, voices, videoId) {
           console.log('speech:' + speech.text)
           if (captions.length <= 1) {
             if (isAutoPause) {
-              // 動画再生を再開
-              currentVideo.play()
+              currentVideo.play() // 動画再生を再開
               isAutoPause = false
             }
           }
+
+          // id=captionDiv要素に字幕を表示する
+          const captionDiv = document.getElementById('captionDiv')
+          captionDiv.innerHTML = speech.text
         }
         speech.onend = () => captions.shift()
         speech.onerror = () => {
@@ -299,9 +311,10 @@ function observeCaption(targetNode, voices, videoId) {
       }
 
       if (captions.length >= 2) {
-        // 読上リストが溜まっている場合、動画再生をStop
-        currentVideo.pause()
-        isAutoPause = true
+        if (!currentVideo.paused) {
+          currentVideo.pause('isAutoPause') // 読上リストが溜まっている場合、動画再生をStop
+          isAutoPause = true
+        }
       }
     }, 100)
   })
