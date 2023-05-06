@@ -22,6 +22,7 @@ const TARGET_VIDEO_NODE = 'vjs-tech' // <video class="vjs-tech">
 const TARGET_CAPTION_NODE1 = 'well--text--2H_p0' // <span class="well--text--2H_p0">
 const TARGET_CAPTION_NODE2 = 'captions-display--captions-cue-text--ECkJu' // <div class="captions-display--captions-cue-text--ECkJu">
 
+// todo: 重複している
 const LANGUAGES = [
   {
     translate: 'de',
@@ -60,13 +61,12 @@ window.onload = start
 const reStart = async () => {
   const video = await getElementByClassName(TARGET_VIDEO_NODE)
   video.addEventListener('seeked', () => {
-    // console.log('seeked')
     captions = []
   })
 
   // 字幕用のDiv要素を追加
   const captionDiv = document.createElement('div')
-  captionDiv.id = 'captionDiv'
+  captionDiv.id = 'captionDiv' // todo:idが２箇所以上で使われている
   captionDiv.className = 'captionDiv'
   video.parentNode.appendChild(captionDiv)
 
@@ -89,12 +89,6 @@ const reStart = async () => {
     document.addEventListener('mouseup', upHandler)
   })
 
-  const voices = await getVoices()
-
-  // 合成音声をストレージに保存
-  let utteranceVoiceList = voices.map((voice) => voice.name)
-  chrome.storage.local.set({ utteranceVoiceList })
-
   video.onplay = () => synth.resume()
   const videoId = video.id
 
@@ -103,7 +97,7 @@ const reStart = async () => {
   // 字幕を監視して、翻訳と読み上げを行う
   const videoPlayer = await getElementByClassName(TARGET_CONTAINER_NODE)
   captions = []
-  await observeCaption(videoPlayer, voices, videoId)
+  await observeCaption(videoPlayer, videoId)
 
   await checkStatus() // 読み上げ機能オンオフを監視
 
@@ -177,32 +171,31 @@ function getStorage() {
  * @param {string} videoId
  * @returns resolve or reject
  */
-function observeVideo(videoId) {
-  return new Promise((resolve, reject) => {
-    const intervalId = setInterval(() => {
-      try {
-        const video = document.getElementById(videoId)
-
-        if (video !== null && video.paused === false) {
-          clearInterval(intervalId)
-          resolve(START_MESSAGE)
-        }
-      } catch {
-        clearInterval(intervalId)
-        reject('observeVideo:\n' + ERROR_MESSAGE)
-      }
-    }, 500)
-  })
-}
+// function observeVideo(videoId) {
+//   return new Promise((resolve, reject) => {
+//     const intervalId = setInterval(() => {
+//       try {
+//         const video = document.getElementById(videoId)
+//
+//         if (video !== null && video.paused === false) {
+//           clearInterval(intervalId)
+//           resolve(START_MESSAGE)
+//         }
+//       } catch {
+//         clearInterval(intervalId)
+//         reject('observeVideo:\n' + ERROR_MESSAGE)
+//       }
+//     }, 500)
+//   })
+// }
 
 /**
  * 字幕を監視する、読み上げる
  * @param targetNode
- * @param voices
  * @param videoId
  * @returns {Promise<unknown>}
  */
-function observeCaption(targetNode, voices, videoId) {
+function observeCaption(targetNode, videoId) {
   return new Promise(async (resolve, reject) => {
     let oldCaption = ''
     let isAutoPause = false
@@ -222,6 +215,7 @@ function observeCaption(targetNode, voices, videoId) {
       // 読み上げ機能をオフに設定している場合、監視を終了する
       const result = await getStorage()
       if (!result.isEnabledSpeak) {
+        document.getElementById('captionDiv')?.remove() // 字幕表示用のDiv要素を削除
         clearInterval(intervalId)
         resolve(DISABLE_MESSAGE)
         return
@@ -260,7 +254,7 @@ function observeCaption(targetNode, voices, videoId) {
           )}`
           const translated = await translateText(apiUrl)
           if (translated !== undefined) {
-            console.log('translated:' + translated) // todo: 画面に表示するようにする
+            // console.log('translated:' + translated)
             captions.push(translated)
           }
         } else {
@@ -277,8 +271,6 @@ function observeCaption(targetNode, voices, videoId) {
 
       // 発話しておらず字幕リストが空でもない場合
       if (synth.speaking === false && captions.length !== 0) {
-        // console.log('captions.length=' + captions.length)
-        console.log('isAutoPause=' + isAutoPause)
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
@@ -288,9 +280,10 @@ function observeCaption(targetNode, voices, videoId) {
         speech.lang = targetLang.speak
         speech.volume = result.utteranceVolume
         speech.rate = result.utteranceRate
+        const voices = await getVoices()
         speech.voice = voices[result.utteranceVoiceType]
         speech.onstart = () => {
-          console.log('speech:' + speech.text)
+          // console.log('speech:' + speech.text)
           if (captions.length <= 1) {
             if (isAutoPause) {
               currentVideo.play() // 動画再生を再開

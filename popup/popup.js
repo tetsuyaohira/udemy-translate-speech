@@ -1,20 +1,40 @@
 'use strict'
+const synth = document.defaultView.speechSynthesis
+
+import { LANGUAGES } from '../utils/languages.js'
 
 constructor()
 
-function constructor() {
-  chrome.storage.local.get(
+const getUtteranceVoiceList = async (utteranceLang) => {
+  return synth
+    .getVoices()
+    .filter((voice) => voice.lang === utteranceLang)
+    .map((voice) => {
+      return voice.name
+    })
+}
+
+const getUtteranceLang = (lang) => {
+  return LANGUAGES.find((language) => language.translate === lang).speak
+}
+
+async function constructor() {
+  await chrome.storage.local.get(
     [
       'isEnabledSpeak',
       'isEnabledTranslation',
       'translateTo',
+      'utteranceLang',
       'utteranceVolume',
       'utteranceRate',
       'utteranceVoiceList',
       'utteranceVoiceType',
       'userAgent',
     ],
-    (data) => {
+    async (data) => {
+      const utteranceVoiceList = await getUtteranceVoiceList(data.utteranceLang)
+      await chrome.storage.local.set({ utteranceVoiceList })
+
       // translation ON/OFF
       const isEnabledTranslation = data.isEnabledTranslation
       const powerButtonSwitchTranslation = document.getElementById(
@@ -50,15 +70,30 @@ function constructor() {
       volumeSlider.addEventListener('change', handleVolumeChange)
 
       // voice
-      if (data.utteranceVoiceList.length !== 0) {
-        createVoiceTypeElement(data)
-        createRateElement(data)
+      if (utteranceVoiceList.length !== 0) {
+        createVoiceTypeElement({
+          utteranceVoiceList,
+          utteranceVoiceType: data.utteranceVoiceType,
+          isEnabledSpeak,
+        })
+        //         createVoiceTypeElement(data)
+        createRateElement({
+          utteranceVoiceList,
+          utteranceRate: data.utteranceRate,
+          isEnabledSpeak,
+          utteranceVoiceType: data.utteranceVoiceType,
+          userAgent: data.userAgent,
+        })
       }
     }
   )
 }
 
 function createVoiceTypeElement(data) {
+  // id="container-voices"の要素が存在すれば削除
+  const oldContainerVoices = document.getElementById('container-voices')
+  if (oldContainerVoices) oldContainerVoices.remove()
+
   document.getElementById('widget').style.height = 280 + 'px'
 
   const containerVoices = document.createElement('div')
@@ -100,6 +135,9 @@ function createVoiceTypeElement(data) {
 }
 
 function createRateElement(data) {
+  const oldContainerRate = document.getElementById('container-rate')
+  if (oldContainerRate) oldContainerRate.remove()
+
   document.getElementById('widget').style.height = 495 + 'px'
 
   let rateValue = data.utteranceRate
@@ -175,9 +213,42 @@ function handleCheckboxChangeTranslation(event) {
   const languageSelect = document.getElementById('translate-to')
   if (languageSelect !== null) languageSelect.disabled = !isEnabledTranslation
 }
-function handleLanguageChange(event) {
-  const language = event.target.value
-  chrome.storage.local.set({ translateTo: language })
+async function handleLanguageChange(event) {
+  chrome.storage.local.get(
+    [
+      'isEnabledSpeak',
+      'translateTo',
+      'utteranceLang',
+      'utteranceVolume',
+      'utteranceRate',
+      'utteranceVoiceList',
+      'utteranceVoiceType',
+      'userAgent',
+    ],
+    async (data) => {
+      const translateTo = event.target.value
+      await chrome.storage.local.set({ translateTo })
+
+      const utteranceLang = getUtteranceLang(translateTo)
+      await chrome.storage.local.set({ utteranceLang })
+
+      const utteranceVoiceList = await getUtteranceVoiceList(utteranceLang)
+      await chrome.storage.local.set({ utteranceVoiceList })
+
+      createVoiceTypeElement({
+        utteranceVoiceList,
+        utteranceVoiceType: 0,
+        isEnabledSpeak: data.isEnabledSpeak,
+      })
+      createRateElement({
+        utteranceVoiceList,
+        utteranceRate: data.utteranceRate,
+        isEnabledSpeak: data.isEnabledSpeak,
+        utteranceVoiceType: data.utteranceVoiceType,
+        userAgent: data.userAgent,
+      })
+    }
+  )
 }
 
 function handleCheckboxChangeSpeak(event) {

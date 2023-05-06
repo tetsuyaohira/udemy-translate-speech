@@ -2,6 +2,7 @@
     position: absolute;
     padding: 0px 0.875rem;
     cursor: move;
+    top: 85%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 70%;
