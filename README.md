@@ -2,7 +2,7 @@
 
 The Udemy Translate Speech Chrome Extension is a tool that automatically translates the subtitles of Udemy learning videos and plays them back in synthesized speech. This extension can help users who are learning a new language to easily understand the video content and follow along with the subtitles.
 
-![img.png](images/img.png)
+![img.png](public/images/img.png)
 
 ## Features
 
