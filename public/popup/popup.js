@@ -76,7 +76,6 @@ async function constructor() {
           utteranceVoiceType: data.utteranceVoiceType,
           isEnabledSpeak,
         })
-        //         createVoiceTypeElement(data)
         createRateElement({
           utteranceVoiceList,
           utteranceRate: data.utteranceRate,
@@ -213,6 +212,7 @@ function handleCheckboxChangeTranslation(event) {
   const languageSelect = document.getElementById('translate-to')
   if (languageSelect !== null) languageSelect.disabled = !isEnabledTranslation
 }
+
 async function handleLanguageChange(event) {
   chrome.storage.local.get(
     [

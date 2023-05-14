@@ -2,13 +2,17 @@
   "name": "udemy-translate-speech",
   "version": "1.0.0",
   "description": "",
-  "main": "background.js",
+  "main": "src/background.js",
   "scripts": {
+    "build": "webpack --mode=production --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "prettier": "^2.8.8"
+  "devDependencies": {
+    "copy-webpack-plugin": "^11.0.0",
+    "prettier": "^2.8.8",
+    "webpack": "^5.82.1",
+    "webpack-cli": "^5.1.1"
   }
 }
