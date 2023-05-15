@@ -1,5 +1,7 @@
 'use strict'
 
+import { LANGUAGES } from './utils/languages.js'
+
 chrome.storage.local.set({ userAgent: window.navigator.userAgent })
 
 let captions = [] // 字幕リスト
@@ -12,7 +14,7 @@ const SKIP_MESSAGE =
   'Video playback stopped due to delayed reading of subtitles.\nPlease adjust the reading speed from the settings screen.'
 const DELETE_MESSAGE =
   'Deleted or disabled during "Udemy translate & speech" operation.'
-const START_MESSAGE = 'Video playback has started.'
+// const START_MESSAGE = 'Video playback has started.'
 const ENABLE_MESSAGE = 'Currently, Udemy translate & speaker is enable.'
 const DISABLE_MESSAGE = 'Currently, Udemy translate & speaker is disable.'
 const CHANGE_VIDEO_ID_MESSAGE = 'The Video Id has been changed.'
@@ -21,34 +23,6 @@ const TARGET_CONTAINER_NODE = 'video-player--container--YDQRW' // <div class="vi
 const TARGET_VIDEO_NODE = 'vjs-tech' // <video class="vjs-tech">
 const TARGET_CAPTION_NODE1 = 'well--text--2H_p0' // <span class="well--text--2H_p0">
 const TARGET_CAPTION_NODE2 = 'captions-display--captions-cue-text--ECkJu' // <div class="captions-display--captions-cue-text--ECkJu">
-
-// todo: 重複している
-const LANGUAGES = [
-  {
-    translate: 'de',
-    speak: 'de-DE',
-  },
-  {
-    translate: 'fr',
-    speak: 'fr-FR',
-  },
-  {
-    translate: 'it',
-    speak: 'it-IT',
-  },
-  {
-    translate: 'ja',
-    speak: 'ja-JP',
-  },
-  {
-    translate: 'ko',
-    speak: 'ko-KR',
-  },
-  {
-    translate: 'ru',
-    speak: 'ru-RU',
-  },
-]
 
 const start = async () => {
   synth.cancel() // バグ対策
@@ -320,6 +294,5 @@ async function sendHttpRequest(url) {
 
 async function translateText(apiUrl) {
   const response = await sendHttpRequest(apiUrl)
-  const translatedText = response[0][0][0]
-  return translatedText
+  return response[0][0][0]
 }
