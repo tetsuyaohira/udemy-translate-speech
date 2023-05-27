@@ -1,11 +1,14 @@
 'use strict'
 
-import { LANGUAGES } from './utils/languages.js'
+import { LANGUAGES } from './utils/languages'
 
 chrome.storage.local.set({ userAgent: window.navigator.userAgent })
 
-let captions = [] // 字幕リスト
-const synth = document.defaultView.speechSynthesis
+let captions: any[] = [] // 字幕リスト
+const synth: SpeechSynthesis | undefined =
+  document?.defaultView?.speechSynthesis
+if (synth === undefined) throw new Error('SpeechSynthesis is not available.')
+
 const UNAVAILABLE_MESSAGE =
   'It seems that "subtitle reading" is not available in this browser.\nPlease try another browser.'
 const ERROR_MESSAGE =
@@ -33,7 +36,7 @@ const start = async () => {
 window.onload = start
 
 const reStart = async () => {
-  const video = await getElementByClassName(TARGET_VIDEO_NODE)
+  const video: any = await getElementByClassName(TARGET_VIDEO_NODE)
   video.addEventListener('seeked', () => {
     captions = []
   })
@@ -48,7 +51,7 @@ const reStart = async () => {
   captionDiv.addEventListener('mousedown', (e) => {
     const x = e.pageX - captionDiv.offsetLeft
     const y = e.pageY - captionDiv.offsetTop
-    const moveHandler = (e) => {
+    const moveHandler = (e: any) => {
       // 要素をマウス座標に合わせて移動する
       captionDiv.style.left = e.pageX - x + 'px'
       captionDiv.style.top = e.pageY - y + 'px'
@@ -63,7 +66,7 @@ const reStart = async () => {
     document.addEventListener('mouseup', upHandler)
   })
 
-  video.onplay = () => synth.resume()
+  video.onplay = () => synth?.resume()
   const videoId = video.id
 
   // await observeVideo(videoId) // ビデオが再生されるまで待機
@@ -83,13 +86,13 @@ const reStart = async () => {
  * @returns {Promise<SpeechSynthesisVoice[]>}
  */
 async function getVoices() {
-  const voices = synth.getVoices()
-  if (voices.length === 0) throw Error(UNAVAILABLE_MESSAGE)
-  const result = await getStorage()
-  const targetLang = LANGUAGES.find(
-    (language) => language.translate === result.translateTo
+  const voices: SpeechSynthesisVoice[] | undefined = synth?.getVoices()
+  if (voices?.length === 0) throw Error(UNAVAILABLE_MESSAGE)
+  const result: any = await getStorage()
+  const targetLang: any = LANGUAGES.find(
+    (language: any) => language.translate === result.translateTo
   )
-  return voices.filter((voice) => voice.lang === targetLang.speak)
+  return voices?.filter((voice) => voice.lang === targetLang.speak)
 }
 
 /**
@@ -99,8 +102,8 @@ async function getVoices() {
 async function checkStatus() {
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(async () => {
-      const result = await getStorage()
-      if (result !== undefined && result.isEnabledSpeak === true) {
+      const result: any = await getStorage()
+      if (result !== undefined && result?.isEnabledSpeak === true) {
         clearInterval(intervalId)
         resolve(ENABLE_MESSAGE)
       }
@@ -113,7 +116,7 @@ async function checkStatus() {
  * @param {string} className
  * @returns {Promise<HTMLVideoElement>} elements
  */
-async function getElementByClassName(className) {
+async function getElementByClassName(className: string) {
   return new Promise((resolve) => {
     const intervalId = setInterval(() => {
       const element = document.getElementsByClassName(className)[0]
@@ -169,7 +172,9 @@ function getStorage() {
  * @param videoId
  * @returns {Promise<unknown>}
  */
-function observeCaption(targetNode, videoId) {
+function observeCaption(targetNode: any, videoId: any) {
+  if (synth === undefined) throw new Error('SpeechSynthesis is not available.')
+
   return new Promise(async (resolve, reject) => {
     let oldCaption = ''
     let isAutoPause = false
@@ -177,7 +182,12 @@ function observeCaption(targetNode, videoId) {
     const intervalId = setInterval(async () => {
       let caption = ''
 
-      const currentVideo = document.querySelector("[id^='playerId__'] video")
+      const currentVideo: any | null = document.querySelector(
+        "[id^='playerId__'] video"
+      )
+      if (currentVideo === null) {
+        throw new Error('currentVideo is null')
+      }
 
       // 読み込み時とビデオIDが変わった場合
       if (currentVideo?.id !== videoId) {
@@ -187,7 +197,7 @@ function observeCaption(targetNode, videoId) {
       }
 
       // 読み上げ機能をオフに設定している場合、監視を終了する
-      const result = await getStorage()
+      const result: any = await getStorage()
       if (!result.isEnabledSpeak) {
         document.getElementById('captionDiv')?.remove() // 字幕表示用のDiv要素を削除
         clearInterval(intervalId)
@@ -218,7 +228,7 @@ function observeCaption(targetNode, videoId) {
         oldCaption = caption
         if (result.isEnabledTranslation) {
           const sourceLanguage = 'en'
-          const result = await getStorage()
+          const result: any = await getStorage()
           const targetLanguage = result.translateTo
           const editedCaption = caption
             .replace(/\. /g, '.')
@@ -244,17 +254,17 @@ function observeCaption(targetNode, videoId) {
       }
 
       // 発話しておらず字幕リストが空でもない場合
-      if (synth.speaking === false && captions.length !== 0) {
+      if (!synth.speaking && captions.length !== 0) {
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
-        const targetLang = LANGUAGES.find(
-          (language) => language.translate === result.translateTo
+        const targetLang: any = LANGUAGES.find(
+          (language: any) => language.translate === result.translateTo
         )
         speech.lang = targetLang.speak
         speech.volume = result.utteranceVolume
         speech.rate = result.utteranceRate
-        const voices = await getVoices()
+        const voices: any = await getVoices()
         speech.voice = voices[result.utteranceVoiceType]
         speech.onstart = () => {
           // console.log('speech:' + speech.text)
@@ -266,8 +276,11 @@ function observeCaption(targetNode, videoId) {
           }
 
           // id=captionDiv要素に字幕を表示する
-          const captionDiv = document.getElementById('captionDiv')
-          captionDiv.innerHTML = speech.text
+          const captionDiv: HTMLElement | null =
+            document.getElementById('captionDiv')
+          if (captionDiv !== null) {
+            captionDiv.innerHTML = speech.text
+          }
         }
         speech.onend = () => captions.shift()
         speech.onerror = () => {
@@ -278,7 +291,7 @@ function observeCaption(targetNode, videoId) {
       }
 
       if (captions.length >= 2) {
-        if (!currentVideo.paused) {
+        if (!currentVideo?.paused) {
           currentVideo.pause('isAutoPause') // 読上リストが溜まっている場合、動画再生をStop
           isAutoPause = true
         }
@@ -287,12 +300,12 @@ function observeCaption(targetNode, videoId) {
   })
 }
 
-async function sendHttpRequest(url) {
+async function sendHttpRequest(url: string) {
   const response = await fetch(url)
   return await response.json()
 }
 
-async function translateText(apiUrl) {
+async function translateText(apiUrl: string) {
   const response = await sendHttpRequest(apiUrl)
   return response[0][0][0]
 }

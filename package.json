@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/background.js",
   "scripts": {
-    "build": "webpack --mode=production --watch",
+    "build": "webpack --mode=production",
+    "build:watch": "webpack --mode=production --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,5 +15,10 @@
     "prettier": "^2.8.8",
     "webpack": "^5.82.1",
     "webpack-cli": "^5.1.1"
+  },
+  "dependencies": {
+    "@types/chrome": "^0.0.237",
+    "ts-loader": "^9.4.3",
+    "typescript": "^5.0.4"
   }
 }

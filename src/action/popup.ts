@@ -1,11 +1,13 @@
 'use strict'
-const synth = document.defaultView.speechSynthesis
+const synth: SpeechSynthesis | undefined =
+  document?.defaultView?.speechSynthesis
+if (synth === undefined) throw new Error('SpeechSynthesis is not available.')
 
-import { LANGUAGES } from '../utils/languages.js'
+import { LANGUAGES } from '../utils/languages'
 
 constructor()
 
-const getUtteranceVoiceList = async (utteranceLang) => {
+const getUtteranceVoiceList = async (utteranceLang: any) => {
   return synth
     .getVoices()
     .filter((voice) => voice.lang === utteranceLang)
@@ -14,7 +16,8 @@ const getUtteranceVoiceList = async (utteranceLang) => {
     })
 }
 
-const getUtteranceLang = (lang) => {
+const getUtteranceLang = (lang: any) => {
+  // @ts-ignore
   return LANGUAGES.find((language) => language.translate === lang).speak
 }
 
@@ -37,9 +40,11 @@ async function constructor() {
 
       // translation ON/OFF
       const isEnabledTranslation = data.isEnabledTranslation
-      const powerButtonSwitchTranslation = document.getElementById(
+      const powerButtonSwitchTranslation: any = document.getElementById(
         'power-button-switch-translation'
       )
+      if (powerButtonSwitchTranslation === null)
+        throw new Error('powerButtonSwitchTranslation is null')
       powerButtonSwitchTranslation.checked = isEnabledTranslation
       powerButtonSwitchTranslation.addEventListener(
         'change',
@@ -47,16 +52,19 @@ async function constructor() {
       )
 
       // translation language
-      const languageSelect = document.getElementById('translate-to')
+      const languageSelect: any = document.getElementById('translate-to')
+      if (languageSelect === null) throw new Error('languageSelect is null')
       languageSelect.value = data.translateTo
       languageSelect.disabled = !isEnabledTranslation
       languageSelect.addEventListener('change', handleLanguageChange)
 
       // speak ON/OFF
       const isEnabledSpeak = data.isEnabledSpeak
-      const powerButtonSwitchSpeak = document.getElementById(
+      const powerButtonSwitchSpeak: any = document.getElementById(
         'power-button-switch-speak'
       )
+      if (powerButtonSwitchSpeak === null)
+        throw new Error('powerButtonSwitchSpeak is null')
       powerButtonSwitchSpeak.checked = isEnabledSpeak
       powerButtonSwitchSpeak.addEventListener(
         'change',
@@ -64,7 +72,8 @@ async function constructor() {
       )
 
       // volume
-      const volumeSlider = document.getElementById('volume-slider')
+      const volumeSlider: any = document.getElementById('volume-slider')
+      if (volumeSlider === null) throw new Error('volumeSlider is null')
       volumeSlider.value = data.utteranceVolume
       volumeSlider.disabled = !isEnabledSpeak
       volumeSlider.addEventListener('change', handleVolumeChange)
@@ -88,11 +97,12 @@ async function constructor() {
   )
 }
 
-function createVoiceTypeElement(data) {
+function createVoiceTypeElement(data: any) {
   // id="container-voices"の要素が存在すれば削除
   const oldContainerVoices = document.getElementById('container-voices')
   if (oldContainerVoices) oldContainerVoices.remove()
 
+  // @ts-ignore
   document.getElementById('widget').style.height = 280 + 'px'
 
   const containerVoices = document.createElement('div')
@@ -116,8 +126,8 @@ function createVoiceTypeElement(data) {
   voicesOption.appendChild(voiceType)
 
   const select = document.createElement('select')
-  data.utteranceVoiceList.forEach((voice, index) => {
-    let option = document.createElement('option')
+  data.utteranceVoiceList.forEach((voice: any, index: number) => {
+    let option: any = document.createElement('option')
     option.value = index
     option.text = voice
     select.add(option)
@@ -126,6 +136,7 @@ function createVoiceTypeElement(data) {
   select.selectedIndex = data.utteranceVoiceType
   voiceType.appendChild(select)
 
+  // @ts-ignore
   document
     .getElementById('power-on')
     .insertAdjacentElement('beforeend', containerVoices)
@@ -133,10 +144,11 @@ function createVoiceTypeElement(data) {
   if (!data.isEnabledSpeak) select.disabled = true
 }
 
-function createRateElement(data) {
+function createRateElement(data: any) {
   const oldContainerRate = document.getElementById('container-rate')
   if (oldContainerRate) oldContainerRate.remove()
 
+  // @ts-ignore
   document.getElementById('widget').style.height = 495 + 'px'
 
   let rateValue = data.utteranceRate
@@ -184,7 +196,7 @@ function createRateElement(data) {
   rateOption.className = 'container-rate-option'
   containerRate.appendChild(rateOption)
 
-  const rateSlider = document.createElement('input')
+  const rateSlider: any = document.createElement('input')
   rateSlider.id = 'rate-slider'
   rateSlider.type = 'range'
   rateSlider.min = rateValueMin
@@ -198,6 +210,7 @@ function createRateElement(data) {
   item2.appendChild(rateSlider)
   rateOption.appendChild(item2)
 
+  // @ts-ignore
   document
     .getElementById('power-on')
     .insertAdjacentElement('beforeend', containerRate)
@@ -205,15 +218,15 @@ function createRateElement(data) {
   if (!data.isEnabledSpeak) rateSlider.disabled = true
 }
 
-function handleCheckboxChangeTranslation(event) {
+function handleCheckboxChangeTranslation(event: any) {
   const isEnabledTranslation = event.target.checked
   chrome.storage.local.set({ isEnabledTranslation: isEnabledTranslation })
 
-  const languageSelect = document.getElementById('translate-to')
+  const languageSelect: any = document.getElementById('translate-to')
   if (languageSelect !== null) languageSelect.disabled = !isEnabledTranslation
 }
 
-async function handleLanguageChange(event) {
+async function handleLanguageChange(event: any) {
   chrome.storage.local.get(
     [
       'isEnabledSpeak',
@@ -251,30 +264,30 @@ async function handleLanguageChange(event) {
   )
 }
 
-function handleCheckboxChangeSpeak(event) {
+function handleCheckboxChangeSpeak(event: any) {
   const isEnabledSpeak = event.target.checked
   chrome.storage.local.set({ isEnabledSpeak: isEnabledSpeak })
 
-  const volumeSlider = document.getElementById('volume-slider')
-  const rateSlider = document.getElementById('rate-slider')
-  const voiceTypeId = document.getElementById('voice-type-id')
+  const volumeSlider: any = document.getElementById('volume-slider')
+  const rateSlider: any = document.getElementById('rate-slider')
+  const voiceTypeId: any = document.getElementById('voice-type-id')
   if (volumeSlider !== null) volumeSlider.disabled = !isEnabledSpeak
   if (rateSlider !== null) rateSlider.disabled = !isEnabledSpeak
   if (voiceTypeId !== null) voiceTypeId.disabled = !isEnabledSpeak
 }
 
-function handleVolumeChange(event) {
+function handleVolumeChange(event: any) {
   chrome.storage.local.set({ utteranceVolume: event.target.value })
 }
 
-function handleRateChange(event) {
+function handleRateChange(event: any) {
   chrome.storage.local.set({ utteranceRate: event.target.value })
 }
 
-async function handleVoiceTypeChange(event) {
+async function handleVoiceTypeChange(event: any) {
   chrome.storage.local.set({ utteranceVoiceType: event.target.value })
 
-  let rateSlider = document.getElementById('rate-slider')
+  let rateSlider: any = document.getElementById('rate-slider')
   const voiceTypeText = event.target.options[event.target.value].textContent
   if (voiceTypeText !== undefined) {
     if (
@@ -289,7 +302,8 @@ async function handleVoiceTypeChange(event) {
       chrome.storage.local.set({ utteranceRate: rateSlider.value })
     } else {
       /* Google または Kyoko 以外が選択された場合 */
-      const userAgent = await getUserAgent()
+      const userAgent: any = await getUserAgent()
+      if (!userAgent) return
       const isEdge = userAgent.toLowerCase().indexOf('edg') !== -1
       if (isEdge) {
         rateSlider.min = 1
