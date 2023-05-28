@@ -1,5 +1,4 @@
-// todo: 重複している
-export const LANGUAGES = [
+export const LANGUAGES: any = [
   {
     translate: 'de',
     speak: 'de-DE',

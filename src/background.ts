@@ -6,7 +6,7 @@ const translateTo = 'ja'
 const utteranceLang = 'ja-JP'
 const utteranceVolume = 0.5
 const utteranceRate = 3.5
-const utteranceVoiceList = []
+const utteranceVoiceList: any = []
 const utteranceVoiceType = 0
 const userAgent = ''
 
