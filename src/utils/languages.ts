@@ -23,4 +23,8 @@ export const LANGUAGES: any = [
     translate: 'ru',
     speak: 'ru-RU',
   },
+  {
+    translate: 'pt',
+    speak: 'pt-BR',
+  },
 ]
