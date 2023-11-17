@@ -21,8 +21,13 @@ const getUtteranceLang = (lang: any) => {
   return LANGUAGES.find((language) => language.translate === lang).speak
 }
 
+const getTranslateLang = (speak: string) => {
+  // @ts-ignore
+  return LANGUAGES.find((language) => language.speak === speak).translate
+}
+
 async function constructor() {
-  await chrome.storage.local.get(
+  chrome.storage.local.get(
     [
       'isEnabledSpeak',
       'isEnabledTranslation',
@@ -54,7 +59,7 @@ async function constructor() {
       // translation language
       const languageSelect: any = document.getElementById('translate-to')
       if (languageSelect === null) throw new Error('languageSelect is null')
-      languageSelect.value = data.translateTo
+      languageSelect.value = data.utteranceLang
       languageSelect.disabled = !isEnabledTranslation
       languageSelect.addEventListener('change', handleLanguageChange)
 
@@ -239,11 +244,10 @@ async function handleLanguageChange(event: any) {
       'userAgent',
     ],
     async (data) => {
-      const translateTo = event.target.value
-      await chrome.storage.local.set({ translateTo })
-
-      const utteranceLang = getUtteranceLang(translateTo)
+      const utteranceLang = event.target.value
       await chrome.storage.local.set({ utteranceLang })
+      const translateTo = getTranslateLang(utteranceLang)
+      await chrome.storage.local.set({ translateTo })
 
       const utteranceVoiceList = await getUtteranceVoiceList(utteranceLang)
       await chrome.storage.local.set({ utteranceVoiceList })
