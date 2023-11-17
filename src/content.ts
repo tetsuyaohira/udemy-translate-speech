@@ -22,10 +22,10 @@ const ENABLE_MESSAGE = 'Currently, Udemy translate & speaker is enable.'
 const DISABLE_MESSAGE = 'Currently, Udemy translate & speaker is disable.'
 const CHANGE_VIDEO_ID_MESSAGE = 'The Video Id has been changed.'
 
-const TARGET_CONTAINER_NODE = 'video-player--container--YDQRW' // <div class="video-player--container--YDQRW">
-const TARGET_VIDEO_NODE = 'vjs-tech' // <video class="vjs-tech">
-const TARGET_CAPTION_NODE1 = 'well--text--2H_p0' // <span class="well--text--2H_p0">
-const TARGET_CAPTION_NODE2 = 'captions-display--captions-cue-text--ECkJu' // <div class="captions-display--captions-cue-text--ECkJu">
+const TARGET_CONTAINER_NODE = 'video-player--container--'
+const TARGET_VIDEO_NODE = 'video-player--video-player--'
+const TARGET_CAPTION_NODE1 = 'well--text--'
+const TARGET_CAPTION_NODE2 = 'captions-display--captions-cue-text--'
 
 const start = async () => {
   synth.cancel() // バグ対策
@@ -119,7 +119,7 @@ async function checkStatus() {
 async function getElementByClassName(className: string) {
   return new Promise((resolve) => {
     const intervalId = setInterval(() => {
-      const element = document.getElementsByClassName(className)[0]
+      const element = document.querySelectorAll(`[class^="${className}"]`)[0]
 
       if (element !== null && element !== undefined) {
         clearInterval(intervalId)
@@ -206,10 +206,13 @@ function observeCaption(targetNode: any, videoId: any) {
       }
 
       // 監視対象の字幕を含むエレメントを取得する
-      const TARGET_NODE1 =
-        targetNode.getElementsByClassName(TARGET_CAPTION_NODE1)[0]
-      const TARGET_NODE2 =
-        targetNode.getElementsByClassName(TARGET_CAPTION_NODE2)[0]
+      const TARGET_NODE1 = document.querySelectorAll(
+        `[class^="${TARGET_CAPTION_NODE1}"]`
+      )[0]
+
+      const TARGET_NODE2 = document.querySelectorAll(
+        `[class^="${TARGET_CAPTION_NODE2}"]`
+      )[0]
 
       // エレメントから字幕を抽出する
       if (TARGET_NODE1 !== undefined && TARGET_NODE1.innerHTML !== '') {
