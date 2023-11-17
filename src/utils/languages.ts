@@ -1,4 +1,9 @@
-export const LANGUAGES: any = [
+type Language = {
+  translate: string
+  speak: string
+}
+
+export const LANGUAGES: Language[] = [
   {
     translate: 'de',
     speak: 'de-DE',
