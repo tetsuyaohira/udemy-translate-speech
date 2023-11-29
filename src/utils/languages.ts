@@ -23,4 +23,5 @@ export const LANGUAGES: Language[] = [
   { translate: 'bn', speak: 'bn-BD' }, // ベンガル語（バングラデシュ）
   { translate: 'fil', speak: 'fil-PH' }, // フィリピン語
   { translate: 'id', speak: 'id-ID' }, // インドネシア語
+  { translate: 'vi', speak: 'vi-VN' }, // ベトナム語
 ]
