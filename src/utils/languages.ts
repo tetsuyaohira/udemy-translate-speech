@@ -24,4 +24,14 @@ export const LANGUAGES: Language[] = [
   { translate: 'fil', speak: 'fil-PH' }, // フィリピン語
   { translate: 'id', speak: 'id-ID' }, // インドネシア語
   { translate: 'vi', speak: 'vi-VN' }, // ベトナム語
+  { translate: 'th', speak: 'th-TH' }, // タイ語
+  { translate: 'nl', speak: 'nl-NL' }, // オランダ語
+  { translate: 'sv', speak: 'sv-SE' }, // スウェーデン語
+  { translate: 'no', speak: 'no-NO' }, // ノルウェー語
+  { translate: 'da', speak: 'da-DK' }, // デンマーク語
+  { translate: 'he', speak: 'he-IL' }, // ヘブライ語
+  { translate: 'el', speak: 'el-GR' }, // ギリシャ語
+  { translate: 'cs', speak: 'cs-CZ' }, // チェコ語
+  { translate: 'hu', speak: 'hu-HU' }, // ハンガリー語
+  { translate: 'pl', speak: 'pl-PL' }, // ポーランド語
 ]
