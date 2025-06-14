@@ -23,7 +23,8 @@
     "content_scripts": [
         {
             "matches": [
-                "https://www.udemy.com/course/*"
+                "https://www.udemy.com/course/*",
+                "https://*.udemy.com/course/*"
             ],
             "js": [
                 "content.js"
