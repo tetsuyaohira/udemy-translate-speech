@@ -257,7 +257,8 @@ function observeCaption(targetNode: any, videoId: any) {
       }
 
       // 発話しておらず字幕リストが空でもない場合
-      if (!synth.speaking && captions.length !== 0) {
+      // 動画が再生中の場合のみ音声合成を実行（not-allowedエラー対策）
+      if (!synth.speaking && captions.length !== 0 && !currentVideo?.paused) {
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
@@ -286,9 +287,10 @@ function observeCaption(targetNode: any, videoId: any) {
           }
         }
         speech.onend = () => captions.shift()
-        speech.onerror = () => {
+        speech.onerror = (event) => {
+          console.error('Speech synthesis error:', event)
           clearInterval(intervalId)
-          reject('Speech Caption:\n' + ERROR_MESSAGE)
+          reject('Speech Caption:\n' + ERROR_MESSAGE + '\nError: ' + event.error)
         }
         synth.speak(speech)
       }
