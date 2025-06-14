@@ -120,8 +120,7 @@ function createVoiceTypeElement(data: any) {
   const oldContainerVoices = document.getElementById('container-voices')
   if (oldContainerVoices) oldContainerVoices.remove()
 
-  // @ts-ignore
-  document.getElementById('widget').style.height = 280 + 'px'
+  // widgetの高さは自動調整に任せる（固定高さを削除）
 
   const containerVoices = document.createElement('div')
   containerVoices.id = 'container-voices'
@@ -166,13 +165,17 @@ function createRateElement(data: any) {
   const oldContainerRate = document.getElementById('container-rate')
   if (oldContainerRate) oldContainerRate.remove()
 
+  // 古いspacerDivも削除
+  const oldSpacerDiv = document.getElementById('speed-spacer')
+  if (oldSpacerDiv) oldSpacerDiv.remove()
+
   // @ts-ignore
   document.getElementById('widget').style.height = 495 + 'px'
 
   let rateValue = data.utteranceRate
-  let rateValueMin = 2
+  let rateValueMin = 1
   let rateValueMax = 8
-  let rateValueStep = 1.5
+  let rateValueStep = 0.5
 
   const isEdge = data.userAgent.toLowerCase().indexOf('edg') !== -1
   if (isEdge) {
@@ -228,16 +231,26 @@ function createRateElement(data: any) {
   rateValueSpan.style.marginLeft = '10px'
   rateValueSpan.textContent = rateValue + 'x'
 
-  const item2 = document.createElement('div')
-  item2.className = 'item2'
-  item2.appendChild(rateSlider)
-  item2.appendChild(rateValueSpan)
-  rateOption.appendChild(item2)
+  // VolumeやCaption Font Sizeと同じ構造にする
+  rateOption.appendChild(rateSlider)
+  rateOption.appendChild(rateValueSpan)
 
   // @ts-ignore
   document
     .getElementById('power-on')
     .insertAdjacentElement('beforeend', containerRate)
+
+  // Speedスライダーの下にスペースを作るための見えない要素を追加
+  const spacerDiv = document.createElement('div')
+  spacerDiv.id = 'speed-spacer'
+  spacerDiv.style.height = '10px'
+  spacerDiv.style.width = '100%'
+  spacerDiv.style.backgroundColor = 'transparent'
+
+  // @ts-ignore
+  document
+    .getElementById('power-on')
+    .insertAdjacentElement('beforeend', spacerDiv)
 
   if (!data.isEnabledSpeak) rateSlider.disabled = true
 }
@@ -355,13 +368,13 @@ async function handleVoiceTypeChange(event: any) {
         rateSlider.step = 0.5
       } else {
         rateSlider.max = 8
-        rateSlider.step = 1.5
-        if (rateSlider.value < 2) {
-          rateSlider.value = 3.5
+        rateSlider.step = 0.5
+        if (rateSlider.value < 1) {
+          rateSlider.value = 1.5
 
           chrome.storage.local.set({ utteranceRate: rateSlider.value })
         }
-        rateSlider.min = 2
+        rateSlider.min = 1
       }
     }
   }
