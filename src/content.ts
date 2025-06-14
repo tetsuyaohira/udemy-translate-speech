@@ -37,9 +37,19 @@ window.onload = start
 
 const reStart = async () => {
   const video: any = await getElementByClassName(TARGET_VIDEO_NODE)
-  video.addEventListener('seeked', () => {
+  
+  // 既存のseekイベントリスナーを削除（同じ関数参照を使う）
+  const seekHandler = () => {
     captions = []
-  })
+  }
+  video.removeEventListener('seeked', seekHandler)
+  video.addEventListener('seeked', seekHandler)
+
+  // 既存のcaptionDivがあれば削除
+  const existingCaptionDiv = document.getElementById('captionDiv')
+  if (existingCaptionDiv) {
+    existingCaptionDiv.remove()
+  }
 
   // 字幕用のDiv要素を追加
   const captionDiv = document.createElement('div')
@@ -100,9 +110,13 @@ const reStart = async () => {
   captions = []
   await observeCaption(videoPlayer, videoId)
 
-  await checkStatus() // 読み上げ機能オンオフを監視
-
-  await reStart()
+  try {
+    await checkStatus() // 読み上げ機能オンオフを監視
+    await reStart()
+  } catch (error) {
+    console.error('Error in reStart:', error)
+    // エラー時は再起動せずに停止
+  }
 }
 
 /**
@@ -125,11 +139,23 @@ async function getVoices() {
  */
 async function checkStatus() {
   return new Promise((resolve, reject) => {
+    let attemptCount = 0
+    const maxAttempts = 20 // 10秒でタイムアウト (500ms * 20)
+    
     const intervalId = setInterval(async () => {
-      const result: any = await getStorage()
-      if (result !== undefined && result?.isEnabledSpeak === true) {
+      attemptCount++
+      try {
+        const result: any = await getStorage()
+        if (result !== undefined && result?.isEnabledSpeak === true) {
+          clearInterval(intervalId)
+          resolve(ENABLE_MESSAGE)
+        } else if (attemptCount >= maxAttempts) {
+          clearInterval(intervalId)
+          resolve(DISABLE_MESSAGE) // タイムアウト時は無効として扱う
+        }
+      } catch (error) {
         clearInterval(intervalId)
-        resolve(ENABLE_MESSAGE)
+        reject(error)
       }
     }, 500)
   })
@@ -141,13 +167,20 @@ async function checkStatus() {
  * @returns {Promise<HTMLVideoElement>} elements
  */
 async function getElementByClassName(className: string) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    let attemptCount = 0
+    const maxAttempts = 60 // 30秒でタイムアウト (500ms * 60)
+    
     const intervalId = setInterval(() => {
+      attemptCount++
       const element = document.querySelectorAll(`[class^="${className}"]`)[0]
 
       if (element !== null && element !== undefined) {
         clearInterval(intervalId)
         resolve(element)
+      } else if (attemptCount >= maxAttempts) {
+        clearInterval(intervalId)
+        reject(new Error(`Element with class ${className} not found after 30 seconds`))
       }
     }, 500)
   })
@@ -338,11 +371,24 @@ function observeCaption(targetNode: any, videoId: any) {
 }
 
 async function sendHttpRequest(url: string) {
-  const response = await fetch(url)
-  return await response.json()
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Network request failed:', error)
+    throw error
+  }
 }
 
 async function translateText(apiUrl: string) {
-  const response = await sendHttpRequest(apiUrl)
-  return response[0][0][0]
+  try {
+    const response = await sendHttpRequest(apiUrl)
+    return response[0][0][0]
+  } catch (error) {
+    console.error('Translation failed:', error)
+    return undefined // 翻訳失敗時はundefinedを返す
+  }
 }
