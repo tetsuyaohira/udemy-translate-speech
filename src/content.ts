@@ -72,6 +72,24 @@ const reStart = async () => {
     document.addEventListener('mouseup', upHandler)
   })
 
+  // 字幕エリアをダブルクリックで翻訳ON/OFF切り替え
+  captionDiv.addEventListener('dblclick', async () => {
+    const currentSettings: any = await getStorage()
+    const newTranslationState = !currentSettings.isEnabledTranslation
+    
+    // 設定を更新
+    chrome.storage.local.set({ isEnabledTranslation: newTranslationState })
+    
+    // 視覚的フィードバック：境界線の色を変更
+    if (newTranslationState) {
+      captionDiv.style.border = '2px solid #4CAF50' // 緑色：翻訳ON
+      setTimeout(() => { captionDiv.style.border = 'none' }, 1000)
+    } else {
+      captionDiv.style.border = '2px solid #f44336' // 赤色：翻訳OFF  
+      setTimeout(() => { captionDiv.style.border = 'none' }, 1000)
+    }
+  })
+
   video.onplay = () => synth?.resume()
   const videoId = video.id
 
@@ -293,6 +311,11 @@ function observeCaption(targetNode: any, videoId: any) {
             // フォントサイズを適用
             const fontSize = result.captionFontSize || 1.5
             captionDiv.style.fontSize = fontSize + 'em'
+            
+            // 翻訳状態を視覚的に表示（左上にアイコン表示）
+            const translationIndicator = result.isEnabledTranslation ? '🌐' : '📝'
+            captionDiv.setAttribute('data-translation', result.isEnabledTranslation ? 'on' : 'off')
+            captionDiv.innerHTML = `<span style="font-size: 0.8em; opacity: 0.7; position: absolute; top: -20px; left: 0;">${translationIndicator}</span>` + speech.text
           }
         }
         speech.onend = () => captions.shift()
