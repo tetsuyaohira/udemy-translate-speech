@@ -45,6 +45,12 @@ const reStart = async () => {
   const captionDiv = document.createElement('div')
   captionDiv.id = 'captionDiv' // todo:idが２箇所以上で使われている
   captionDiv.className = 'captionDiv'
+  
+  // 初期フォントサイズを設定
+  const result: any = await getStorage()
+  const fontSize = result.captionFontSize || 1.5
+  captionDiv.style.fontSize = fontSize + 'em'
+  
   video.parentNode.appendChild(captionDiv)
 
   // 字幕用のDiv要素をドラッグで移動できるようにする
@@ -284,6 +290,9 @@ function observeCaption(targetNode: any, videoId: any) {
             document.getElementById('captionDiv')
           if (captionDiv !== null) {
             captionDiv.innerHTML = speech.text
+            // フォントサイズを適用
+            const fontSize = result.captionFontSize || 1.5
+            captionDiv.style.fontSize = fontSize + 'em'
           }
         }
         speech.onend = () => captions.shift()

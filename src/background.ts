@@ -9,6 +9,7 @@ const utteranceRate = 3.5
 const utteranceVoiceList: any = []
 const utteranceVoiceType = 0
 const userAgent = ''
+const captionFontSize = 1.5
 
 chrome.runtime.onInstalled.addListener(async () => {
   chrome.storage.local.set({ isEnabledSpeak })
@@ -20,4 +21,5 @@ chrome.runtime.onInstalled.addListener(async () => {
   chrome.storage.local.set({ utteranceVoiceList })
   chrome.storage.local.set({ utteranceVoiceType })
   chrome.storage.local.set({ userAgent })
+  chrome.storage.local.set({ captionFontSize })
 })

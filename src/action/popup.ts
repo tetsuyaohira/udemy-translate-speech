@@ -38,6 +38,7 @@ async function constructor() {
       'utteranceVoiceList',
       'utteranceVoiceType',
       'userAgent',
+      'captionFontSize',
     ],
     async (data) => {
       const utteranceVoiceList = await getUtteranceVoiceList(data.utteranceLang)
@@ -79,9 +80,21 @@ async function constructor() {
       // volume
       const volumeSlider: any = document.getElementById('volume-slider')
       if (volumeSlider === null) throw new Error('volumeSlider is null')
+      const volumeValue: any = document.getElementById('volume-value')
       volumeSlider.value = data.utteranceVolume
+      volumeValue.textContent = data.utteranceVolume
       volumeSlider.disabled = !isEnabledSpeak
-      volumeSlider.addEventListener('change', handleVolumeChange)
+      volumeSlider.addEventListener('input', handleVolumeChange)
+
+      // font size
+      const fontSizeSlider: any = document.getElementById('font-size-slider')
+      if (fontSizeSlider === null) throw new Error('fontSizeSlider is null')
+      const fontSizeValue: any = document.getElementById('font-size-value')
+      const currentFontSize = data.captionFontSize || 1.5
+      fontSizeSlider.value = currentFontSize
+      fontSizeValue.textContent = currentFontSize + 'x'
+      fontSizeSlider.addEventListener('input', handleFontSizeChange)
+      fontSizeSlider.disabled = !isEnabledSpeak
 
       // voice
       if (utteranceVoiceList.length !== 0) {
@@ -208,11 +221,17 @@ function createRateElement(data: any) {
   rateSlider.step = rateValueStep
   rateSlider.value = rateValue
   rateSlider.max = rateValueMax
-  rateSlider.addEventListener('change', handleRateChange)
+  rateSlider.addEventListener('input', handleRateChange)
+
+  const rateValueSpan = document.createElement('span')
+  rateValueSpan.id = 'rate-value'
+  rateValueSpan.style.marginLeft = '10px'
+  rateValueSpan.textContent = rateValue + 'x'
 
   const item2 = document.createElement('div')
   item2.className = 'item2'
   item2.appendChild(rateSlider)
+  item2.appendChild(rateValueSpan)
   rateOption.appendChild(item2)
 
   // @ts-ignore
@@ -275,17 +294,38 @@ function handleCheckboxChangeSpeak(event: any) {
   const volumeSlider: any = document.getElementById('volume-slider')
   const rateSlider: any = document.getElementById('rate-slider')
   const voiceTypeId: any = document.getElementById('voice-type-id')
+  const fontSizeSlider: any = document.getElementById('font-size-slider')
   if (volumeSlider !== null) volumeSlider.disabled = !isEnabledSpeak
   if (rateSlider !== null) rateSlider.disabled = !isEnabledSpeak
   if (voiceTypeId !== null) voiceTypeId.disabled = !isEnabledSpeak
+  if (fontSizeSlider !== null) fontSizeSlider.disabled = !isEnabledSpeak
 }
 
 function handleVolumeChange(event: any) {
-  chrome.storage.local.set({ utteranceVolume: event.target.value })
+  const volume = event.target.value
+  chrome.storage.local.set({ utteranceVolume: volume })
+  const volumeValue: any = document.getElementById('volume-value')
+  if (volumeValue) {
+    volumeValue.textContent = volume
+  }
+}
+
+function handleFontSizeChange(event: any) {
+  const fontSize = event.target.value
+  chrome.storage.local.set({ captionFontSize: fontSize })
+  const fontSizeValue: any = document.getElementById('font-size-value')
+  if (fontSizeValue) {
+    fontSizeValue.textContent = fontSize + 'x'
+  }
 }
 
 function handleRateChange(event: any) {
-  chrome.storage.local.set({ utteranceRate: event.target.value })
+  const rate = event.target.value
+  chrome.storage.local.set({ utteranceRate: rate })
+  const rateValue: any = document.getElementById('rate-value')
+  if (rateValue) {
+    rateValue.textContent = rate + 'x'
+  }
 }
 
 async function handleVoiceTypeChange(event: any) {
