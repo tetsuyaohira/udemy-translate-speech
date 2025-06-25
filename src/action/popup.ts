@@ -138,23 +138,18 @@ function createVoiceTypeElement(data: any) {
 
   const containerVoices = document.createElement('div')
   containerVoices.id = 'container-voices'
-  containerVoices.className = 'container-voices'
+  containerVoices.className = 'container-voice-row'
 
-  const voicesTitle = document.createElement('p')
-  voicesTitle.id = 'container-voices-title'
-  voicesTitle.className = 'container-voices-title'
+  const voicesTitle = document.createElement('span')
+  voicesTitle.className = 'voice-label'
   voicesTitle.innerHTML = 'Voice'
   containerVoices.appendChild(voicesTitle)
 
-  const voicesOption = document.createElement('div')
-  voicesOption.id = 'container-voices-option'
-  containerVoices.appendChild(voicesOption)
-
   const voiceType = document.createElement('div')
-  voiceType.className = 'item'
+  voiceType.className = 'voice-value'
   voiceType.id = 'voice-type'
   voiceType.addEventListener('change', handleVoiceTypeChange)
-  voicesOption.appendChild(voiceType)
+  containerVoices.appendChild(voiceType)
 
   const select = document.createElement('select')
   data.utteranceVoiceList.forEach((voice: any, index: number) => {
@@ -179,8 +174,6 @@ function createRateElement(data: any) {
   const oldContainerRate = document.getElementById('container-rate')
   if (oldContainerRate) oldContainerRate.remove()
 
-  // @ts-ignore
-  document.getElementById('widget').style.height = 495 + 'px'
 
   let rateValue = data.utteranceRate
   let rateValueMin = 1
