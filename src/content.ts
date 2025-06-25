@@ -253,9 +253,10 @@ function observeCaption(targetNode: any, videoId: any) {
         return
       }
 
-      // 読み上げ機能をオフに設定している場合、監視を終了する
+      // 読み上げ機能と字幕表示機能が両方オフの場合、監視を終了する
       const result: any = await getStorage()
-      if (!result.isEnabledSpeak) {
+      const isEnabledSubtitles = result.isEnabledSubtitles ?? true
+      if (!result.isEnabledSpeak && !isEnabledSubtitles) {
         document.getElementById('captionDiv')?.remove() // 字幕表示用のDiv要素を削除
         clearInterval(intervalId)
         resolve(DISABLE_MESSAGE)
@@ -313,9 +314,36 @@ function observeCaption(targetNode: any, videoId: any) {
         alert(SKIP_MESSAGE)
       }
 
+      // 字幕を表示する（SpeakがOFFでもSubtitlesがONなら表示）
+      if (captions.length !== 0) {
+        const textContent = captions[0]
+        const captionDiv: HTMLElement | null = document.getElementById('captionDiv')
+        
+        if (captionDiv !== null && isEnabledSubtitles) {
+          captionDiv.innerHTML = textContent
+          const fontSize = result.captionFontSize || 1.5
+          captionDiv.style.fontSize = fontSize + 'em'
+          
+          const translationIndicator = result.isEnabledTranslation ? '🌐' : '📝'
+          captionDiv.setAttribute('data-translation', result.isEnabledTranslation ? 'on' : 'off')
+          captionDiv.innerHTML = `<span style="font-size: 0.8em; opacity: 0.7; position: absolute; top: -20px; left: 0;">${translationIndicator}</span>` + textContent
+          captionDiv.style.display = 'block'
+        } else if (captionDiv !== null && !isEnabledSubtitles) {
+          captionDiv.innerHTML = ''
+          captionDiv.style.display = 'none'
+        }
+        
+        // SpeakがOFFの場合は字幕だけ表示してリストから削除
+        if (!result.isEnabledSpeak) {
+          setTimeout(() => {
+            captions.shift()
+          }, 3000) // 3秒間表示してから削除
+        }
+      }
+
       // 発話しておらず字幕リストが空でもない場合
       // 動画が再生中の場合のみ音声合成を実行（not-allowedエラー対策）
-      if (!synth.speaking && captions.length !== 0 && !currentVideo?.paused) {
+      if (result.isEnabledSpeak && !synth.speaking && captions.length !== 0 && !currentVideo?.paused) {
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
@@ -336,19 +364,17 @@ function observeCaption(targetNode: any, videoId: any) {
             }
           }
 
-          // id=captionDiv要素に字幕を表示する
-          const captionDiv: HTMLElement | null =
-            document.getElementById('captionDiv')
-          if (captionDiv !== null) {
+          // Speak中の字幕表示（重複表示を防ぐため、既に表示されていない場合のみ）
+          const captionDiv: HTMLElement | null = document.getElementById('captionDiv')
+          if (captionDiv !== null && isEnabledSubtitles && captionDiv.innerHTML !== speech.text) {
             captionDiv.innerHTML = speech.text
-            // フォントサイズを適用
             const fontSize = result.captionFontSize || 1.5
             captionDiv.style.fontSize = fontSize + 'em'
             
-            // 翻訳状態を視覚的に表示（左上にアイコン表示）
             const translationIndicator = result.isEnabledTranslation ? '🌐' : '📝'
             captionDiv.setAttribute('data-translation', result.isEnabledTranslation ? 'on' : 'off')
             captionDiv.innerHTML = `<span style="font-size: 0.8em; opacity: 0.7; position: absolute; top: -20px; left: 0;">${translationIndicator}</span>` + speech.text
+            captionDiv.style.display = 'block'
           }
         }
         speech.onend = () => captions.shift()

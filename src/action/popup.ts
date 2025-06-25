@@ -31,6 +31,7 @@ async function constructor() {
     [
       'isEnabledSpeak',
       'isEnabledTranslation',
+      'isEnabledSubtitles',
       'translateTo',
       'utteranceLang',
       'utteranceVolume',
@@ -77,6 +78,19 @@ async function constructor() {
         handleCheckboxChangeSpeak
       )
 
+      // subtitles ON/OFF
+      const isEnabledSubtitles = data.isEnabledSubtitles ?? true
+      const powerButtonSwitchSubtitles: any = document.getElementById(
+        'power-button-switch-subtitles'
+      )
+      if (powerButtonSwitchSubtitles === null)
+        throw new Error('powerButtonSwitchSubtitles is null')
+      powerButtonSwitchSubtitles.checked = isEnabledSubtitles
+      powerButtonSwitchSubtitles.addEventListener(
+        'change',
+        handleCheckboxChangeSubtitles
+      )
+
       // volume
       const volumeSlider: any = document.getElementById('volume-slider')
       if (volumeSlider === null) throw new Error('volumeSlider is null')
@@ -94,7 +108,7 @@ async function constructor() {
       fontSizeSlider.value = currentFontSize
       fontSizeValue.textContent = currentFontSize + 'x'
       fontSizeSlider.addEventListener('input', handleFontSizeChange)
-      fontSizeSlider.disabled = !isEnabledSpeak
+      fontSizeSlider.disabled = !isEnabledSubtitles
 
       // voice
       if (utteranceVoiceList.length !== 0) {
@@ -164,10 +178,6 @@ function createVoiceTypeElement(data: any) {
 function createRateElement(data: any) {
   const oldContainerRate = document.getElementById('container-rate')
   if (oldContainerRate) oldContainerRate.remove()
-
-  // 古いspacerDivも削除
-  const oldSpacerDiv = document.getElementById('speed-spacer')
-  if (oldSpacerDiv) oldSpacerDiv.remove()
 
   // @ts-ignore
   document.getElementById('widget').style.height = 495 + 'px'
@@ -240,18 +250,6 @@ function createRateElement(data: any) {
     .getElementById('power-on')
     .insertAdjacentElement('beforeend', containerRate)
 
-  // Speedスライダーの下にスペースを作るための見えない要素を追加
-  const spacerDiv = document.createElement('div')
-  spacerDiv.id = 'speed-spacer'
-  spacerDiv.style.height = '10px'
-  spacerDiv.style.width = '100%'
-  spacerDiv.style.backgroundColor = 'transparent'
-
-  // @ts-ignore
-  document
-    .getElementById('power-on')
-    .insertAdjacentElement('beforeend', spacerDiv)
-
   if (!data.isEnabledSpeak) rateSlider.disabled = true
 }
 
@@ -307,11 +305,17 @@ function handleCheckboxChangeSpeak(event: any) {
   const volumeSlider: any = document.getElementById('volume-slider')
   const rateSlider: any = document.getElementById('rate-slider')
   const voiceTypeId: any = document.getElementById('voice-type-id')
-  const fontSizeSlider: any = document.getElementById('font-size-slider')
   if (volumeSlider !== null) volumeSlider.disabled = !isEnabledSpeak
   if (rateSlider !== null) rateSlider.disabled = !isEnabledSpeak
   if (voiceTypeId !== null) voiceTypeId.disabled = !isEnabledSpeak
-  if (fontSizeSlider !== null) fontSizeSlider.disabled = !isEnabledSpeak
+}
+
+function handleCheckboxChangeSubtitles(event: any) {
+  const isEnabledSubtitles = event.target.checked
+  chrome.storage.local.set({ isEnabledSubtitles: isEnabledSubtitles })
+
+  const fontSizeSlider: any = document.getElementById('font-size-slider')
+  if (fontSizeSlider !== null) fontSizeSlider.disabled = !isEnabledSubtitles
 }
 
 function handleVolumeChange(event: any) {

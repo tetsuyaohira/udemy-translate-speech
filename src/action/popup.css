@@ -274,6 +274,10 @@ body {
     outline: none;
 }
 
+.subtitle-settings {
+    margin-bottom: 20px;
+}
+
 hr {
     margin: 20px 0;
     border: none;
