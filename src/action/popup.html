@@ -1,116 +1,137 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="es">
 
 <head>
     <title>Udemy translate & speech</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <link href="popup.css" rel="stylesheet">
     <script type="module" src="popup.js"></script>
 </head>
 
 <body>
-<div class="widget" id="widget">
-    <div id="widget-title" class="widget-title">
-        <h3>Udemy translate & speaker</h3>
-    </div>
-    <div class="container-power">
-        <div class="container-power-option">
-            <div class="item1">
-                <p>Translation</p>
-            </div>
-            <div class="item2"></div>
-            <div class="item3">
-                <div class="power-button">
-                    <input id="power-button-switch-translation" class="power-button-switch" type="checkbox">
-                    <label for="power-button-switch-translation"></label>
-                    <div class="power-button-switch-img"></div>
-                </div>
-            </div>
-        </div>
+    <main class="widget" id="widget" role="main" aria-label="Controles de Udemy translate and speaker">
+        <header id="widget-title" class="widget-title">
+            <h3>Udemy Translate & Speaker</h3>
+        </header>
 
-        <div class="container-voices">
-            <p class="container-voices-title">Translate From</p>
-            <div class="item">
-                <span style="font-size: 16px; font-weight: normal;">English</span>
-            </div>
-        </div>
-        <div class="container-voices">
-            <p class="container-voices-title">Translate to</p>
-            <div>
-                <div class="item">
-                    <select id="translate-to">
-                        <!-- Major International Languages -->
-                        <option value="zh-CN">Chinese (Simplified)</option>
-                        <option value="zh-TW">Chinese (Traditional)</option>
-                        <option value="es-ES">Spanish</option>
-                        <option value="hi-IN">Hindi</option>
-                        <option value="ar-SA">Arabic</option>
-                        <option value="pt-BR">Portuguese (Brazil)</option>
-                        <option value="pt-PT">Portuguese (Portugal)</option>
-                        <option value="bn-BD">Bengali</option>
-                        <option value="ru-RU">Russian</option>
-                        <option value="ja-JP">Japanese</option>
-                        <option value="fr-FR">French</option>
-                        <option value="fr-CA">French (Canada)</option>
-                        <option value="de-DE">German</option>
-                        <!-- Asian Languages -->
-                        <option value="ko-KR">Korean</option>
-                        <option value="vi-VN">Vietnamese</option>
-                        <option value="th-TH">Thai</option>
-                        <option value="id-ID">Indonesian</option>
-                        <option value="fil-PH">Filipino</option>
-                        <!-- European Languages -->
-                        <option value="it-IT">Italian</option>
-                        <option value="nl-NL">Dutch</option>
-                        <option value="pl-PL">Polish</option>
-                        <option value="uk-UA">Ukrainian</option>
-                        <option value="tr-TR">Turkish</option>
-                        <option value="sv-SE">Swedish</option>
-                        <option value="no-NO">Norwegian</option>
-                        <option value="da-DK">Danish</option>
-                        <option value="cs-CZ">Czech</option>
-                        <option value="hu-HU">Hungarian</option>
-                        <option value="el-GR">Greek</option>
-                        <!-- Middle Eastern Languages -->
-                        <option value="he-IL">Hebrew</option>
-                    </select>
+        <section class="controls" aria-label="Opciones de traducción">
+            <fieldset class="container-power" aria-labelledby="translation-legend">
+                <legend id="translation-legend" class="sr-only">Traducción</legend>
+                <div class="container-power-option">
+                    <div class="item1">
+                        <p>Translation</p>
+                    </div>
+                    <div class="item3">
+                        <div class="power-button">
+                            <input id="power-button-switch-translation" class="power-button-switch" type="checkbox" aria-label="Activar Traducción">
+                            <label for="power-button-switch-translation" tabindex="0"></label>
+                            <div class="power-button-switch-img" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container-voices" id="container-voices-wrapper">
+                    <p class="container-voices-title">Translate From</p>
+                    <div class="item">
+                        <span style="font-size: 16px; font-weight: normal;">English</span>
+                    </div>
+                </div>
+
+                <div class="container-voices">
+                    <label class="container-voices-title" for="translate-to">Translate to</label>
+                    <div class="item">
+                        <select id="translate-to" aria-label="Seleccionar idioma destino">
+                            <option value="zh-CN">Chinese (Simplified)</option>
+                            <option value="zh-TW">Chinese (Traditional)</option>
+                            <option value="es-ES">Spanish</option>
+                            <option value="hi-IN">Hindi</option>
+                            <option value="ar-SA">Arabic</option>
+                            <option value="pt-BR">Portuguese (Brazil)</option>
+                            <option value="pt-PT">Portuguese (Portugal)</option>
+                            <option value="bn-BD">Bengali</option>
+                            <option value="ru-RU">Russian</option>
+                            <option value="ja-JP">Japanese</option>
+                            <option value="fr-FR">French</option>
+                            <option value="fr-CA">French (Canada)</option>
+                            <option value="de-DE">German</option>
+                            <option value="ko-KR">Korean</option>
+                            <option value="vi-VN">Vietnamese</option>
+                            <option value="th-TH">Thai</option>
+                            <option value="id-ID">Indonesian</option>
+                            <option value="fil-PH">Filipino</option>
+                            <option value="it-IT">Italian</option>
+                            <option value="nl-NL">Dutch</option>
+                            <option value="pl-PL">Polish</option>
+                            <option value="uk-UA">Ukrainian</option>
+                            <option value="tr-TR">Turkish</option>
+                            <option value="sv-SE">Swedish</option>
+                            <option value="no-NO">Norwegian</option>
+                            <option value="da-DK">Danish</option>
+                            <option value="cs-CZ">Czech</option>
+                            <option value="hu-HU">Hungarian</option>
+                            <option value="el-GR">Greek</option>
+                            <option value="he-IL">Hebrew</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <hr>
+
+            <fieldset class="container-power" aria-labelledby="speak-legend">
+                <legend id="speak-legend" class="sr-only">Lectura en voz</legend>
+                <div class="container-power-option">
+                    <div class="item1">
+                        <p>Speak</p>
+                    </div>
+                    <div class="item3">
+                        <div class="power-button">
+                            <input id="power-button-switch-speak" class="power-button-switch" type="checkbox" aria-label="Activar Lectura">
+                            <label for="power-button-switch-speak" tabindex="0"></label>
+                            <div class="power-button-switch-img" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </section>
+
+        <section class="power-on" id="power-on" aria-live="polite">
+            <div class="container-volume">
+                <label class="container-volume-title" for="volume-slider">Volume</label>
+                <div class="container-volume-option">
+                    <input type="range" min="0.1" max="1" step="0.1" id="volume-slider" aria-label="Volumen de lectura">
+                    <span id="volume-value" style="margin-left: 10px;">0.5</span>
                 </div>
             </div>
-        </div>
-    </div>
-    <hr>
-    <div class="container-power">
-        <div class="container-power-option">
-            <div class="item1">
-                <p>Speak</p>
-            </div>
-            <div class="item2"></div>
-            <div class="item3">
-                <div class="power-button">
-                    <input id="power-button-switch-speak" class="power-button-switch" type="checkbox">
-                    <label for="power-button-switch-speak"></label>
-                    <div class="power-button-switch-img"></div>
+
+            <div class="container-display-captions">
+                <div class="container-power-option">
+                    <div class="item1">
+                        <p>Show Captions</p>
+                    </div>
+                    <div class="item3">
+                        <div class="power-button">
+                            <input id="power-button-switch-display-captions" class="power-button-switch" type="checkbox" aria-label="Mostrar subtítulos">
+                            <label for="power-button-switch-display-captions" tabindex="0"></label>
+                            <div class="power-button-switch-img" aria-hidden="true"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="power-on" id="power-on">
-        <div class="container-volume">
-            <p class="container-volume-title">Volume</p>
-            <div class="container-volume-option">
-                <input type="range" min="0.1" max="1" step="0.1" id="volume-slider">
-                <span id="volume-value" style="margin-left: 10px;">0.5</span>
+
+            <div class="container-volume">
+                <label class="container-volume-title" for="font-size-slider">Caption Font Size</label>
+                <div class="container-volume-option">
+                    <input type="range" min="0.8" max="2.5" step="0.1" value="1.5" id="font-size-slider" aria-label="Tamaño de fuente de subtítulos">
+                    <span id="font-size-value" style="margin-left: 10px;">1.5x</span>
+                </div>
             </div>
-        </div>
-        <div class="container-volume">
-            <p class="container-volume-title">Caption Font Size</p>
-            <div class="container-volume-option">
-                <input type="range" min="0.8" max="2.5" step="0.1" value="1.5" id="font-size-slider">
-                <span id="font-size-value" style="margin-left: 10px;">1.5x</span>
-            </div>
-        </div>
-    </div>
-</div>
+        </section>
+
+    </main>
+
+    <footer role="contentinfo" style="display:none"></footer>
 </body>
 
 </html>

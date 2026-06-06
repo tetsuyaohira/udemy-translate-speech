@@ -5,8 +5,6 @@ if (synth === undefined) throw new Error('SpeechSynthesis is not available.')
 
 import { LANGUAGES } from '../utils/languages'
 
-constructor()
-
 const getUtteranceVoiceList = async (utteranceLang: any) => {
   return synth
     .getVoices()
@@ -31,6 +29,7 @@ async function constructor() {
     [
       'isEnabledSpeak',
       'isEnabledTranslation',
+      'isEnabledDisplayCaptions', //Cargamos el estado del nuevo switch
       'translateTo',
       'utteranceLang',
       'utteranceVolume',
@@ -77,6 +76,20 @@ async function constructor() {
         handleCheckboxChangeSpeak
       )
 
+      //LÓGICA DEL NUEVO SWITCH: Inicializar estado y agregar EventListener
+      const isEnabledDisplayCaptions = data.isEnabledDisplayCaptions !== false // Por defecto true si no existe
+      const displayCaptionsSwitch: any = document.getElementById(
+        'power-button-switch-display-captions'
+      )
+      if (displayCaptionsSwitch !== null) {
+        displayCaptionsSwitch.checked = isEnabledDisplayCaptions
+        displayCaptionsSwitch.disabled = !isEnabledSpeak // Se acopla al estado de "Speak"
+        displayCaptionsSwitch.addEventListener(
+          'change',
+          handleCheckboxChangeDisplayCaptions
+        )
+      }
+
       // volume
       const volumeSlider: any = document.getElementById('volume-slider')
       if (volumeSlider === null) throw new Error('volumeSlider is null')
@@ -115,12 +128,12 @@ async function constructor() {
   )
 }
 
+//Vinculamos la inicialización al ciclo de vida del Popup
+document.addEventListener('DOMContentLoaded', constructor)
+
 function createVoiceTypeElement(data: any) {
-  // id="container-voices"の要素が存在すれば削除
   const oldContainerVoices = document.getElementById('container-voices')
   if (oldContainerVoices) oldContainerVoices.remove()
-
-  // widgetの高さは自動調整に任せる（固定高さを削除）
 
   const containerVoices = document.createElement('div')
   containerVoices.id = 'container-voices'
@@ -165,12 +178,12 @@ function createRateElement(data: any) {
   const oldContainerRate = document.getElementById('container-rate')
   if (oldContainerRate) oldContainerRate.remove()
 
-  // 古いspacerDivも削除
   const oldSpacerDiv = document.getElementById('speed-spacer')
   if (oldSpacerDiv) oldSpacerDiv.remove()
 
+  // Ajustamos la altura a 540px para dar perfecto espacio al nuevo contenedor sin overflow
   // @ts-ignore
-  document.getElementById('widget').style.height = 495 + 'px'
+  document.getElementById('widget').style.height = 540 + 'px'
 
   let rateValue = data.utteranceRate
   let rateValueMin = 1
@@ -196,7 +209,6 @@ function createRateElement(data: any) {
     (voiceList[voiceType] !== undefined &&
       voiceList[voiceType].indexOf('Kyoko') !== -1)
   ) {
-    /* Google または Kyoko が選択されている場合 */
     rateValueMin = 1
     rateValueMax = 2
     rateValueStep = 0.1
@@ -231,7 +243,6 @@ function createRateElement(data: any) {
   rateValueSpan.style.marginLeft = '10px'
   rateValueSpan.textContent = rateValue + 'x'
 
-  // VolumeやCaption Font Sizeと同じ構造にする
   rateOption.appendChild(rateSlider)
   rateOption.appendChild(rateValueSpan)
 
@@ -240,7 +251,6 @@ function createRateElement(data: any) {
     .getElementById('power-on')
     .insertAdjacentElement('beforeend', containerRate)
 
-  // Speedスライダーの下にスペースを作るための見えない要素を追加
   const spacerDiv = document.createElement('div')
   spacerDiv.id = 'speed-spacer'
   spacerDiv.style.height = '10px'
@@ -261,6 +271,12 @@ function handleCheckboxChangeTranslation(event: any) {
 
   const languageSelect: any = document.getElementById('translate-to')
   if (languageSelect !== null) languageSelect.disabled = !isEnabledTranslation
+}
+
+// NUEVO HANDLER: Guarda en local storage el estado de visualización cambiado por el usuario
+function handleCheckboxChangeDisplayCaptions(event: any) {
+  const isEnabledDisplayCaptions = event.target.checked
+  chrome.storage.local.set({ isEnabledDisplayCaptions: isEnabledDisplayCaptions })
 }
 
 async function handleLanguageChange(event: any) {
@@ -308,10 +324,17 @@ function handleCheckboxChangeSpeak(event: any) {
   const rateSlider: any = document.getElementById('rate-slider')
   const voiceTypeId: any = document.getElementById('voice-type-id')
   const fontSizeSlider: any = document.getElementById('font-size-slider')
+  
+  // Obtenemos el elemento del nuevo switch para controlar su estado de deshabilitación
+  const displayCaptionsSwitch: any = document.getElementById(
+    'power-button-switch-display-captions'
+  )
+
   if (volumeSlider !== null) volumeSlider.disabled = !isEnabledSpeak
   if (rateSlider !== null) rateSlider.disabled = !isEnabledSpeak
   if (voiceTypeId !== null) voiceTypeId.disabled = !isEnabledSpeak
   if (fontSizeSlider !== null) fontSizeSlider.disabled = !isEnabledSpeak
+  if (displayCaptionsSwitch !== null) displayCaptionsSwitch.disabled = !isEnabledSpeak
 }
 
 function handleVolumeChange(event: any) {
@@ -351,14 +374,12 @@ async function handleVoiceTypeChange(event: any) {
       voiceTypeText.indexOf('Google') !== -1 ||
       voiceTypeText.indexOf('Kyoko') !== -1
     ) {
-      /* Google または Kyoko が選択された場合 */
       rateSlider.min = 1
       rateSlider.step = 0.1
       rateSlider.value = 1.5
       rateSlider.max = 2
       chrome.storage.local.set({ utteranceRate: rateSlider.value })
     } else {
-      /* Google または Kyoko 以外が選択された場合 */
       const userAgent: any = await getUserAgent()
       if (!userAgent) return
       const isEdge = userAgent.toLowerCase().indexOf('edg') !== -1
@@ -371,7 +392,6 @@ async function handleVoiceTypeChange(event: any) {
         rateSlider.step = 0.5
         if (rateSlider.value < 1) {
           rateSlider.value = 1.5
-
           chrome.storage.local.set({ utteranceRate: rateSlider.value })
         }
         rateSlider.min = 1
