@@ -22,10 +22,22 @@ const ENABLE_MESSAGE = 'Currently, Udemy translate & speaker is enable.'
 const DISABLE_MESSAGE = 'Currently, Udemy translate & speaker is disable.'
 const CHANGE_VIDEO_ID_MESSAGE = 'The Video Id has been changed.'
 
-const TARGET_CONTAINER_NODE = 'video-player--container--'
-const TARGET_VIDEO_NODE = 'video-player--video-player--'
-const TARGET_CAPTION_NODE1 = 'well--text--'
-const TARGET_CAPTION_NODE2 = 'captions-display--captions-cue-text--'
+const TARGET_CONTAINER_SELECTORS = [
+  '[class^="video-player--container--"]',
+  '[class*="video-player-module--"]',
+]
+const TARGET_VIDEO_SELECTORS = [
+  '[class^="video-player--video-player--"]',
+  '[id^="playerId__"] video',
+  '[class*="video-player-module--"] video',
+  'video',
+]
+const TARGET_CAPTION_SELECTORS = [
+  '[data-purpose="captions-cue-text"]',
+  '[class^="captions-display--captions-cue-text--"]',
+  '[class*="captions-display-module--captions-cue-text--"]',
+  '[class^="well--text--"]',
+]
 
 const start = async () => {
   synth.cancel() // バグ対策
@@ -36,7 +48,7 @@ const start = async () => {
 window.onload = start
 
 const reStart = async () => {
-  const video: any = await getElementByClassName(TARGET_VIDEO_NODE)
+  const video: any = await getVideoElement()
   
   // 既存のseekイベントリスナーを削除（同じ関数参照を使う）
   const seekHandler = () => {
@@ -101,14 +113,13 @@ const reStart = async () => {
   })
 
   video.onplay = () => synth?.resume()
-  const videoId = video.id
 
   // await observeVideo(videoId) // ビデオが再生されるまで待機
 
   // 字幕を監視して、翻訳と読み上げを行う
-  const videoPlayer = await getElementByClassName(TARGET_CONTAINER_NODE)
+  const videoPlayer = queryFirstElement(TARGET_CONTAINER_SELECTORS) || video.parentNode
   captions = []
-  await observeCaption(videoPlayer, videoId)
+  await observeCaption(videoPlayer, video)
 
   try {
     await checkStatus() // 読み上げ機能オンオフを監視
@@ -166,24 +177,45 @@ async function checkStatus() {
  * @param {string} className
  * @returns {Promise<HTMLVideoElement>} elements
  */
-async function getElementByClassName(className: string) {
+async function getVideoElement() {
   return new Promise((resolve, reject) => {
     let attemptCount = 0
     const maxAttempts = 60 // 30秒でタイムアウト (500ms * 60)
     
     const intervalId = setInterval(() => {
       attemptCount++
-      const element = document.querySelectorAll(`[class^="${className}"]`)[0]
+      const element = queryVideoElement()
 
       if (element !== null && element !== undefined) {
         clearInterval(intervalId)
         resolve(element)
       } else if (attemptCount >= maxAttempts) {
         clearInterval(intervalId)
-        reject(new Error(`Element with class ${className} not found after 30 seconds`))
+        reject(new Error('Video element not found after 30 seconds'))
       }
     }, 500)
   })
+}
+
+function queryFirstElement(selectors: string[], root: ParentNode = document) {
+  for (const selector of selectors) {
+    const element = root.querySelector(selector)
+    if (element !== null) return element
+  }
+
+  return null
+}
+
+function queryVideoElement() {
+  for (const selector of TARGET_VIDEO_SELECTORS) {
+    const element = document.querySelector(selector)
+    if (element instanceof HTMLVideoElement) return element
+
+    const video = element?.querySelector('video')
+    if (video instanceof HTMLVideoElement) return video
+  }
+
+  return null
 }
 
 /**
@@ -229,7 +261,7 @@ function getStorage() {
  * @param videoId
  * @returns {Promise<unknown>}
  */
-function observeCaption(targetNode: any, videoId: any) {
+function observeCaption(targetNode: any, video: HTMLVideoElement) {
   if (synth === undefined) throw new Error('SpeechSynthesis is not available.')
 
   return new Promise(async (resolve, reject) => {
@@ -239,15 +271,13 @@ function observeCaption(targetNode: any, videoId: any) {
     const intervalId = setInterval(async () => {
       let caption = ''
 
-      const currentVideo: any | null = document.querySelector(
-        "[id^='playerId__'] video"
-      )
+      const currentVideo: any | null = queryVideoElement()
       if (currentVideo === null) {
         throw new Error('currentVideo is null')
       }
 
       // 読み込み時とビデオIDが変わった場合
-      if (currentVideo?.id !== videoId) {
+      if (currentVideo !== video) {
         clearInterval(intervalId)
         resolve(CHANGE_VIDEO_ID_MESSAGE)
         return
@@ -262,27 +292,14 @@ function observeCaption(targetNode: any, videoId: any) {
         return
       }
 
-      // 監視対象の字幕を含むエレメントを取得する
-      const TARGET_NODE1 = document.querySelectorAll(
-        `[class^="${TARGET_CAPTION_NODE1}"]`
-      )[0]
-
-      const TARGET_NODE2 = document.querySelectorAll(
-        `[class^="${TARGET_CAPTION_NODE2}"]`
-      )[0]
-
       // エレメントから字幕を抽出する
-      if (TARGET_NODE1 !== undefined && TARGET_NODE1.innerHTML !== '') {
-        caption = TARGET_NODE1.innerHTML
-      }
-      if (TARGET_NODE2 !== undefined && TARGET_NODE2.innerHTML !== '') {
-        caption = TARGET_NODE2.innerHTML
-      }
+      caption = getCaptionText(targetNode)
 
       // 抽出した字幕がまだ読み上げていないものだった場合
       if (
         caption !== '' &&
         caption !== '&amp;nbsp;' &&
+        caption !== '\u00a0' &&
         oldCaption !== caption
       ) {
         oldCaption = caption
@@ -309,13 +326,18 @@ function observeCaption(targetNode: any, videoId: any) {
       // 読上リストが溜まっている場合
       if (5 < captions.length) {
         currentVideo.pause()
+        isAutoPause = true
         synth.resume() // なぜか喋らなくなるバグ対応
         alert(SKIP_MESSAGE)
       }
 
       // 発話しておらず字幕リストが空でもない場合
       // 動画が再生中の場合のみ音声合成を実行（not-allowedエラー対策）
-      if (!synth.speaking && captions.length !== 0 && !currentVideo?.paused) {
+      if (
+        !synth.speaking &&
+        captions.length !== 0 &&
+        (!currentVideo?.paused || isAutoPause)
+      ) {
         // 字幕テキスト
         const textContent = captions[0]
         const speech = new SpeechSynthesisUtterance(textContent)
@@ -368,6 +390,20 @@ function observeCaption(targetNode: any, videoId: any) {
       }
     }, 100)
   })
+}
+
+function getCaptionText(targetNode: any) {
+  const roots: ParentNode[] = []
+  if (targetNode instanceof Element) roots.push(targetNode)
+  roots.push(document)
+
+  for (const root of roots) {
+    const captionElement = queryFirstElement(TARGET_CAPTION_SELECTORS, root)
+    const captionText = captionElement?.textContent?.trim()
+    if (captionText) return captionText
+  }
+
+  return ''
 }
 
 async function sendHttpRequest(url: string) {
