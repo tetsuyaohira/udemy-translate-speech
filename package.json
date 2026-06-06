@@ -6,6 +6,7 @@
   "scripts": {
     "build": "webpack --mode=production",
     "build:watch": "webpack --mode=production --watch",
+    "package": "npm run build && cd dist && zip -r ../udemy-translate-speech.zip . && cd ..",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

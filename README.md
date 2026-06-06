@@ -21,6 +21,22 @@ To use this extension, simply install it from the Chrome Web Store and open a Ud
 
 This extension requires the Google Chrome browser to be installed on the user's computer.
 
+## Development
+
+### Build the extension
+```bash
+npm install
+npm run build
+```
+
+### Package for Chrome Web Store
+```bash
+# Build and create a zip file for upload
+npm run package
+```
+
+The packaged extension will be created as `udemy-translate-speech.zip` in the project root.
+
 ## Contributions
 
 Contributions to this project are welcome. Please see the [Contributing Guidelines](CONTRIBUTING.md) for more information.
